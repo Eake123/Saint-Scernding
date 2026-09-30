@@ -1,5 +1,7 @@
 # 🎅 Saint Scernding
 
+![Saint Scernding trailer](docs/trailer.gif)
+
 **A Secret Santa Discord bot.** A self-hosted Discord bot that runs your whole Secret Santa for an **in-person gift exchange**:
 sign-ups, wishlists, a date poll, a fair *blind* draw, anonymous messages, "got your gift?" nudges, and a
 hall of fame so nobody gets the same person twice.

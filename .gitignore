@@ -7,3 +7,7 @@ logs/
 .venv/
 __pycache__/
 .pytest_cache/
+
+# trailer render scratch
+docs/trailer/frames/
+docs/trailer/palette.png

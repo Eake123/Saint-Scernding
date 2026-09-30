@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Saint Scernding trailer</title>
+<!--
+  The README trailer. Every frame is drawn by window.render(t) (t = seconds), so render.py can step
+  through it deterministically. Open this file in a browser to watch it loop.
+  All people here are fake (reindeer names). Copy comes from santa/intro.py, santa/ui.py and santa/actions.py.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Noto+Sans:wght@400;500;600;700;800&family=Pacifico&display=block" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@twemoji/api@15.1.0/dist/twemoji.min.js"></script>
+<style>
+:root{
+  --bg:#313338; --side:#2b2d31; --rail:#1e1f22; --text:#dbdee1; --muted:#949ba4; --head:#f2f3f5;
+  --blurple:#5865f2; --green:#248046; --grey:#4e5058;
+  --red:rgb(196,30,58); --bgreen:rgb(22,125,74); --gold:rgb(212,160,23);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:800px;height:450px;overflow:hidden;background:#000}
+body{font-family:"Noto Sans","Segoe UI",sans-serif;color:var(--text);font-size:13px;line-height:1.36;-webkit-font-smoothing:antialiased}
+#stage{position:relative;width:800px;height:450px;overflow:hidden;background:#0b0b12}
+.scene{position:absolute;inset:0}
+img.emoji{height:1.2em;width:1.2em;vertical-align:-0.24em;margin:0 .04em}
+b{color:var(--head);font-weight:700}
+code{font-family:Consolas,monospace;font-size:.9em;background:#1e1f22;padding:1px 3px;border-radius:3px}
+
+/* ---------- title + end cards ---------- */
+.card{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  background:radial-gradient(ellipse at 50% 40%,#3b1020 0%,#16080f 55%,#07060b 100%)}
+.card .santa{font-size:78px;line-height:1}
+.card .santa img.emoji{margin:0}
+.logo{font-family:Bungee,sans-serif;font-size:54px;line-height:1.05;color:#ffd75e;letter-spacing:1px;
+  text-shadow:0 3px 0 #b3202f,0 6px 0 #5b0f18,0 0 28px rgba(255,200,60,.55)}
+.logo span{display:inline-block}
+.tagline{font-size:19px;font-weight:600;color:#f2f3f5;margin-top:10px}
+.crew{display:flex;gap:10px;margin-top:18px}
+.crew .av{width:44px;height:44px;font-size:25px;border:2px solid rgba(255,255,255,.85)}
+.crewcap{font-size:14px;color:#c9cdd3;margin-top:10px;font-weight:600}
+.pill{display:inline-flex;gap:8px;align-items:center;border-radius:999px;padding:6px 16px;font-weight:700}
+
+/* ---------- discord shell ---------- */
+#discord{background:var(--bg);display:flex}
+.rail{width:48px;background:var(--rail);display:flex;flex-direction:column;align-items:center;padding-top:8px;gap:7px;flex:none}
+.srv{width:34px;height:34px;border-radius:50%;background:#313338;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#dbdee1;position:relative}
+.srv.on{border-radius:11px}
+.srv.on::before{content:"";position:absolute;left:-7px;width:4px;height:26px;border-radius:0 4px 4px 0;background:#fff}
+.sep{width:20px;height:2px;background:#35363c;border-radius:1px}
+.side{width:150px;background:var(--side);flex:none;position:relative}
+.shead{height:40px;display:flex;align-items:center;padding:0 10px;font-weight:700;color:var(--head);font-size:13px;border-bottom:1px solid #1f2023;white-space:nowrap}
+.cat{font-size:10.5px;font-weight:700;color:var(--muted);padding:14px 10px 4px;letter-spacing:.02em}
+.chan{margin:1px 6px;padding:4px 6px;border-radius:4px;color:var(--muted);font-size:13px;font-weight:500;display:flex;gap:6px;align-items:center;white-space:nowrap}
+.chan .hash{font-size:18px;color:#80848e;font-weight:400;line-height:1;min-width:12px}
+.chan .hash img.emoji{height:15px;width:15px}
+.chan.on{background:#404249;color:#fff}
+.chan .av{width:24px;height:24px;font-size:13px}
+.upanel{position:absolute;bottom:0;left:0;right:0;height:46px;background:#232428;display:flex;align-items:center;gap:8px;padding:0 8px;font-weight:600;color:var(--head);font-size:12.5px}
+.upanel .av{width:30px;height:30px;font-size:17px}
+.upanel small{display:block;font-weight:400;color:var(--muted);font-size:10.5px}
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden}
+.av img.emoji{margin:0;vertical-align:0}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+.hdr{height:40px;display:flex;align-items:center;gap:6px;padding:0 12px;border-bottom:1px solid #26272b;color:var(--head);font-weight:700;flex:none;white-space:nowrap;overflow:hidden}
+.hdr .topic{font-weight:400;color:var(--muted);font-size:12px;border-left:1px solid #3f4147;padding-left:9px;margin-left:4px}
+.hash2{font-size:20px;color:#80848e;font-weight:400}
+.chatwrap{flex:1;position:relative;overflow:hidden}
+.pane{position:absolute;left:0;right:0;bottom:0;padding-bottom:6px;visibility:hidden}
+.input{height:40px;margin:0 12px 12px;background:#383a40;border-radius:8px;display:flex;align-items:center;padding:0 12px;color:#6d6f78;flex:none;gap:10px;font-size:13px;position:relative}
+.input .plus{width:20px;height:20px;border-radius:50%;background:#b5bac1;color:#383a40;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1}
+.input .cmd{color:var(--text)}
+.input .cmd b{background:#3c4270;color:#c9cdfb;padding:1px 4px;border-radius:3px;font-weight:600}
+.auto{position:absolute;left:12px;right:12px;bottom:58px;background:#2b2d31;border-radius:8px;padding:8px;box-shadow:0 8px 16px rgba(0,0,0,.4);visibility:hidden}
+.auto .row{background:#35373c;border-radius:4px;padding:6px 8px;display:flex;align-items:center;gap:8px}
+.auto .row .av{width:22px;height:22px;font-size:12px}
+.auto small{color:var(--muted);font-size:11px}
+.autohead{font-size:10.5px;font-weight:700;color:var(--muted);padding:0 4px 6px}
+.members{width:152px;background:var(--side);flex:none;padding:10px 8px;overflow:hidden}
+.mhead{font-size:11px;font-weight:700;color:var(--muted);padding:2px 4px 8px;letter-spacing:.02em}
+.mhead b{font-size:15px;color:#fff}
+.mem{display:flex;align-items:center;gap:8px;padding:3px 4px;height:33px;font-weight:600;font-size:13px;white-space:nowrap}
+.mem .av{width:27px;height:27px;font-size:15px}
+.pov{position:absolute;right:10px;top:8px;background:rgba(17,18,20,.92);border:1px solid #4e5058;color:#fff;font-weight:700;font-size:12px;border-radius:999px;padding:4px 11px;z-index:5}
+
+.msg{display:flex;padding:5px 14px 3px 14px;gap:11px;position:relative}
+.msg .av{width:34px;height:34px;font-size:20px}
+.msg .body{min-width:0;flex:1}
+.name{font-weight:600;color:var(--head);font-size:13.5px}
+.tag{background:var(--blurple);color:#fff;font-size:8.5px;font-weight:700;padding:1px 4px;border-radius:3px;vertical-align:2px;margin-left:4px}
+.time{color:var(--muted);font-size:10.5px;margin-left:6px}
+.msg.eph{background:rgba(88,101,242,.07)}
+.embed{background:var(--side);border-left:4px solid var(--red);border-radius:4px;padding:8px 12px 9px 11px;margin-top:3px;max-width:372px}
+.embed.green{border-left-color:var(--bgreen)} .embed.gold{border-left-color:var(--gold)}
+.et{font-weight:700;color:var(--head);font-size:13.5px;margin-bottom:3px}
+.ed{font-size:12.5px}
+.ef{font-size:12.3px;margin-top:6px} .ef b{display:block}
+.foot{font-size:10.5px;color:var(--muted);margin-top:7px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;max-width:380px}
+.btn{height:28px;padding:0 11px;border-radius:4px;color:#fff;font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.btn.g{background:var(--green)} .btn.b{background:var(--blurple)} .btn.s{background:var(--grey)}
+.ephline{font-size:10.5px;color:var(--muted);margin-top:4px}
+.ephline span{color:#00a8fc}
+
+/* modals */
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.72);visibility:hidden;z-index:20}
+.modal{position:absolute;left:50%;top:50%;width:410px;background:#313338;border-radius:8px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.04),0 12px 40px rgba(0,0,0,.6)}
+.mtitle{font-size:17px;font-weight:700;color:var(--head);padding:14px 16px 6px;display:flex;justify-content:space-between}
+.mtitle i{font-style:normal;color:var(--muted);font-weight:400}
+.field{padding:6px 16px 4px}
+.flabel{font-size:11px;font-weight:700;color:#b5bac1;letter-spacing:.02em;margin-bottom:5px}
+.ta{background:#1e1f22;border-radius:4px;padding:8px 10px;font-size:13px;color:var(--text);min-height:36px;line-height:1.4}
+.ta.tall{min-height:56px}
+.ta .ph{color:#6d6f78}
+.mfoot{background:#2b2d31;padding:12px 16px;display:flex;justify-content:flex-end;align-items:center;gap:18px;margin-top:10px}
+.mfoot span{color:#fff;font-size:13px}
+.mfoot .btn{height:34px;padding:0 20px;font-size:13.5px}
+.caret{display:inline-block;width:1.5px;height:1.05em;background:#f2f3f5;vertical-align:-2px;margin-left:1px}
+
+/* DM notification card (scene 6) */
+.dmcard{position:absolute;right:12px;top:10px;width:318px;background:#232428;border-radius:8px;padding:10px 12px 12px;box-shadow:0 10px 30px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.05);z-index:6;visibility:hidden}
+.dmcard .who{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:2px}
+.dmcard .who .av{width:22px;height:22px;font-size:12px}
+.dmcard .who b{font-size:13px}
+.dmcard .embed{max-width:none}
+.dmreply{font-size:12.3px;margin-top:8px;visibility:hidden}
+
+/* ---------- countdown ---------- */
+#countdown{background:#200008;overflow:hidden}
+#rays{position:absolute;inset:0}
+.cdwrap{position:absolute;inset:0}
+.num{position:absolute;left:0;right:0;top:40px;text-align:center;font-family:Bungee,sans-serif;font-size:230px;line-height:1;color:#fff;visibility:hidden;
+  text-shadow:0 6px 0 rgba(0,0,0,.35),0 0 40px rgba(255,255,255,.35)}
+.cdtop{position:absolute;left:0;right:0;top:26px;text-align:center;font-family:Bungee,sans-serif;font-size:20px;color:#fff;letter-spacing:3px;text-shadow:0 2px 0 rgba(0,0,0,.4)}
+.cdsub{position:absolute;left:0;right:0;top:326px;text-align:center;font-family:Bungee,sans-serif;font-size:34px;color:#fff;visibility:hidden;text-shadow:0 3px 0 rgba(0,0,0,.4)}
+.ring{position:absolute;left:400px;top:158px;border:6px solid #fff;border-radius:50%;visibility:hidden}
+#giftnight{position:absolute;left:0;right:0;top:118px;text-align:center;visibility:hidden}
+#giftnight .gn{font-family:Bungee,sans-serif;font-size:70px;line-height:1;color:#fff;text-shadow:0 0 18px #ff4fd8,0 0 40px #ff4fd8,0 5px 0 #7a1060}
+#giftnight .gs{font-family:Pacifico,cursive;font-size:36px;color:#7df9ff;margin-top:16px;text-shadow:0 0 12px #26e0ff,0 0 26px #26e0ff}
+
+/* ---------- the last straw ---------- */
+#bar{background:#1a0f2e;overflow:hidden}
+#barbg{position:absolute;inset:0}
+.neon{position:absolute;left:0;right:0;top:4px;text-align:center;font-family:Pacifico,cursive;font-size:50px;line-height:1.25;color:#ffe3fb;
+  text-shadow:0 0 4px #fff,0 0 12px #ff4fd8,0 0 24px #ff4fd8,0 0 44px #ff2fc4}
+.neon2{position:absolute;left:0;right:0;top:72px;text-align:center;font-family:Bungee,sans-serif;font-size:15px;letter-spacing:3px;color:#dcfdff;
+  text-shadow:0 0 6px #26e0ff,0 0 16px #26e0ff}
+.tree{position:absolute;left:4px;top:150px;font-size:118px;line-height:1}
+.tree img.emoji{margin:0}
+.person{position:absolute;width:70px;height:70px;margin:-35px 0 0 -35px;font-size:58px;line-height:1;text-align:center;visibility:hidden}
+.person img.emoji{margin:0;width:70px;height:70px}
+.counter{position:absolute;left:0;right:0;top:318px;bottom:0;
+  background:linear-gradient(#b5793d 0,#8a5426 9px,#5b3417 10px,#4a2912 60%,#2c170a 100%)}
+.counter::after{content:"";position:absolute;left:0;right:0;top:10px;bottom:0;
+  background:repeating-linear-gradient(90deg,rgba(0,0,0,.0) 0 96px,rgba(0,0,0,.28) 96px 99px)}
+.nametag{position:absolute;top:326px;transform:translateX(-50%);font-size:11px;font-weight:800;color:#fff;background:rgba(0,0,0,.45);border-radius:999px;padding:1px 8px;white-space:nowrap;z-index:2;visibility:hidden}
+.item{position:absolute;font-size:30px;line-height:1;transform:translate(-50%,-100%);z-index:2}
+.item img.emoji{margin:0}
+.bubble{position:absolute;transform:translate(-50%,-100%);background:#fff;color:#1e1f22;font-weight:800;font-size:13.5px;border-radius:14px;padding:6px 11px;white-space:nowrap;visibility:hidden;z-index:4;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+.bubble::after{content:"";position:absolute;left:50%;bottom:-8px;margin-left:-8px;border:8px solid transparent;border-bottom:0;border-top-color:#fff}
+.fly{position:absolute;font-size:34px;line-height:1;margin:-17px 0 0 -17px;visibility:hidden;z-index:3}
+.fly img.emoji{margin:0}
+.deco{position:absolute;font-size:14px;line-height:1}
+.deco img.emoji{margin:0}
+.laugh{position:absolute;font-size:26px;line-height:1;visibility:hidden;z-index:3}
+.laugh img.emoji{margin:0}
+.tagword{position:absolute;top:372px;font-family:Bungee,sans-serif;font-size:40px;line-height:1;color:#fff;visibility:hidden;z-index:5;white-space:nowrap;
+  text-shadow:0 4px 0 #000,0 0 18px rgba(255,210,80,.6)}
+.tagline2{position:absolute;left:0;right:0;top:370px;text-align:center;font-family:Bungee,sans-serif;font-size:25px;line-height:1.3;color:#fff;visibility:hidden;z-index:5;
+  text-shadow:0 3px 0 #000,0 0 16px rgba(255,79,216,.7)}
+.tagline2 small{display:block;font-family:"Noto Sans",sans-serif;font-weight:800;font-size:14px;color:#ffe08a;letter-spacing:.5px;text-shadow:0 2px 0 #000}
+
+/* ---------- overlays ---------- */
+#fx{position:absolute;inset:0;z-index:40;pointer-events:none}
+#flash{position:absolute;inset:0;background:#fff;z-index:45;opacity:0}
+#cursor{position:absolute;left:0;top:0;width:24px;height:24px;z-index:60;visibility:hidden;transform-origin:3px 2px}
+#ripple{position:absolute;border:3px solid #fff;border-radius:50%;z-index:59;visibility:hidden;box-shadow:0 0 12px rgba(255,255,255,.6)}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="scene card" id="title"></div>
+  <div class="scene" id="discord"></div>
+  <div class="scene" id="countdown"></div>
+  <div class="scene" id="bar"></div>
+  <div class="scene card" id="end"></div>
+  <canvas id="fx" width="800" height="450"></canvas>
+  <div id="flash"></div>
+  <div id="ripple"></div>
+  <svg id="cursor" viewBox="0 0 24 24"><path d="M3 2 L3 19.5 L7.6 15.2 L10.8 22 L13.8 20.6 L10.7 14 L17 13.8 Z" fill="#fff" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/></svg>
+</div>
+
+<script>
+// ============================================================ timeline (seconds)
+const T = {
+  title: 0, join: 2.5, wish: 5.8, draw: 8.3, dm: 9.95, anon: 11.3, anonB: 13.35,
+  post: 14.3, count: 16.5, bar: 19.5, end: 24.5,
+};
+const DURATION = 27;
+window.DURATION = DURATION;
+
+// ============================================================ helpers
+const $ = id => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, k) => a + (b - a) * k;
+const eo = k => 1 - Math.pow(1 - k, 3);
+const eio = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const eback = k => { const c1 = 1.9, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
+function vis(el, on) { el.style.visibility = on ? 'visible' : 'hidden'; }
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let x = Math.imul(seed ^ seed >>> 15, 1 | seed); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+// a message/element that pops into the chat at t0 (and takes up layout space from then on)
+function pop(el, t, t0, dur = .28) {
+  const on = t >= t0;
+  el.style.display = on ? '' : 'none';
+  if (!on) return;
+  const k = eo(seg(t, t0, t0 + dur));
+  el.style.opacity = k;
+  el.style.transform = `translateY(${(1 - k) * 16}px)`;
+}
+
+// ============================================================ fake people (reindeer only)
+const P = {
+  Vixen:   { e: '👩🏾‍🦱', c: '#e8743b', bar: '👩🏾‍🦱' },
+  Comet:   { e: '🧑🏿',   c: '#3b8ee8', bar: '🧑🏿‍🎄' },
+  Dasher:  { e: '👨🏻‍🦱', c: '#9b59b6', bar: '👨🏻‍🦱' },
+  Blitzen: { e: '🧔🏾',   c: '#16a085', bar: '🧔🏾' },
+  Cupid:   { e: '👩🏻‍🦰', c: '#e84393', bar: '👩🏻‍🦰' },
+  Donner:  { e: '🧕🏽',   c: '#2e9e57', bar: '🧕🏽' },
+  Prancer: { e: '👴🏼',   c: '#d4a017', bar: '👴🏼' },
+  Dancer:  { e: '🧑🏽',   c: '#c0392b', bar: '🧑🏽‍🦽' },
+};
+const JOINERS = [
+  ['Vixen','👩🏾‍🦱'],['Comet','🧑🏿'],['Dasher','👨🏻‍🦱'],['Blitzen','🧔🏾'],['Cupid','👩🏻‍🦰'],['Donner','🧕🏽'],
+  ['Prancer','👴🏼'],['Dancer','🧑🏽'],['Rudolph','🧑🏼‍🦲'],['Olive','👩🏿‍🦳'],['Clarice','👱🏽‍♀️'],['Fireball','👳🏾‍♂️'],
+  ['Sparkle','👩🏼'],['Snowball','🧑🏻‍🦱'],['Twinkle','👵🏿'],['Jingle','👨🏽‍🦲'],['Frost','🧑🏾‍🦰'],['Pixie','👩🏻‍🦱'],
+  ['Holly','🧕🏿'],['Tinsel','👨🏼‍🦳'],['Cocoa','🧑🏽‍🦱'],['Juniper','👩🏾'],['Aurora','🧓🏻'],
+];
+const JCOL = ['#e8743b','#3b8ee8','#9b59b6','#16a085','#e84393','#2e9e57','#d4a017','#c0392b','#7f8c8d','#8e44ad','#2980b9','#d35400'];
+const BOT = { e: '🎅', c: 'rgb(196,30,58)' };
+
+const av = (e, c, cls = '') => `<div class="av ${cls}" style="background:${c}">${e}</div>`;
+const time = s => `<span class="time">${s}</span>`;
+function msg(who, html, when = 'Today at 7:02 PM', id = '', eph = false) {
+  const p = who === 'bot' ? BOT : P[who];
+  const name = who === 'bot'
+    ? `<span class="name">Saint Scernding</span><span class="tag">APP</span>`
+    : `<span class="name" style="color:${p.c === '#d4a017' ? '#f1c40f' : lighten(p.c)}">${who}</span>`;
+  return `<div class="msg${eph ? ' eph' : ''}" ${id ? `id="${id}"` : ''}>${av(p.e, p.c)}<div class="body"><div>${name}${time(when)}</div>${html}${
+    eph ? `<div class="ephline">👁️ Only you can see this • <span>Dismiss message</span></div>` : ''}</div></div>`;
+}
+function lighten(c) { const n = parseInt(c.slice(1), 16); const f = v => Math.round(v + (255 - v) * .35); return `rgb(${f(n >> 16)},${f(n >> 8 & 255)},${f(n & 255)})`; }
+const embed = (color, title, desc = '', extra = '', id = '') =>
+  `<div class="embed ${color}" ${id ? `id="${id}"` : ''}><div class="et">${title}</div>${desc ? `<div class="ed">${desc}</div>` : ''}${extra}</div>`;
+const btn = (kind, emoji, label, id = '') => `<div class="btn ${kind}" ${id ? `id="${id}"` : ''}>${emoji} ${label}</div>`;
+const btns = (...b) => `<div class="btns">${b.join('')}</div>`;
+
+// ============================================================ build the scenes
+function buildTitle() {
+  const letters = [...'Saint Scernding'].map(ch => `<span>${ch === ' ' ? '&nbsp;' : ch}</span>`).join('');
+  const crew = Object.values(P).map(p => av(p.e, p.c)).join('');
+  $('title').innerHTML = `
+    <div class="santa" id="tSanta">🎅</div>
+    <div class="logo" id="tLogo">${letters}</div>
+    <div class="tagline" id="tTag">the open-source Secret Santa bot for Discord</div>
+    <div class="crew" id="tCrew">${crew}</div>
+    <div class="crewcap" id="tCap">🎁 for every crew · every kind of friend 🌍</div>`;
+}
+
+function buildDiscord() {
+  const channelSide = `
+    <div id="sideSrv">
+      <div class="shead">🦌 Reindeer Games</div>
+      <div class="cat">TEXT CHANNELS</div>
+      <div class="chan"><span class="hash">#</span>general</div>
+      <div class="chan on"><span class="hash">#</span>secret-santa</div>
+      <div class="chan"><span class="hash">#</span>ugly-sweaters</div>
+      <div class="chan"><span class="hash">#</span>memes</div>
+      <div class="cat">VOICE CHANNELS</div>
+      <div class="chan"><span class="hash">🔊</span>Karaoke Night</div>
+    </div>
+    <div id="sideDm">
+      <div class="shead" style="color:var(--muted);font-weight:500">Find a conversation</div>
+      <div class="cat">DIRECT MESSAGES</div>
+      <div class="chan on">${av(BOT.e, BOT.c)}Saint Scernding</div>
+      <div class="chan">${av(P.Cupid.e, P.Cupid.c)}Cupid</div>
+      <div class="chan">${av(P.Donner.e, P.Donner.c)}Donner</div>
+      <div class="chan">${av(P.Blitzen.e, P.Blitzen.c)}Blitzen</div>
+    </div>
+    <div class="upanel"><span id="meAv"></span><div><span id="meName"></span><small>🎄 feeling festive</small></div></div>`;
+
+  const members = JOINERS.map(([n, e], i) =>
+    `<div class="mem" data-i="${i}">${av(e, JCOL[i % JCOL.length])}<span style="color:${i < 8 ? lighten(P[n].c) : '#dbdee1'}">${n}</span></div>`
+  ).reverse().join('');
+
+  // scene 2+3: #secret-santa as Vixen
+  const intro = embed('', '🎅🎄✨ HO HO HOLY SH*T IT\'S SECRET SANTA SZN ✨🎄🎅',
+    'Hiiii besties 👋🥺💅 It is I, <b>Saint Scernding</b> 😇🎅🕯️, patron saint of gifts 🎁, gossip 🗣️ and questionable decisions 🍻🍻🍻<br><br>' +
+    '💰 <b>Budget:</b> $100 💸💸 (no cheaping out 👀)<br>📍 <b>Where:</b> The Last Straw 🍻');
+  const p2 = `
+    ${msg('Blitzen', `<div>who's bringing the ugly sweaters this year 😂🎄</div>`, 'Today at 7:01 PM')}
+    ${msg('bot', intro + btns(btn('g', '🎁', 'Join', 'bJoin'), btn('b', '📝', 'My wishlist'), btn('b', '📅', 'Pick dates'), btn('s', '⭐', 'Star me on GitHub')), 'Today at 7:04 PM')}
+    ${msg('bot', embed('green', '🎁 You\'re in!',
+        'Next steps:<br>📝 <b>Fill in your wishlist</b> so your Santa knows what to get<br>📅 <b>Pick the dates</b> you can make for gift night<br>🕰️ Use <code>/history</code> to name up to 2 people you\'ve had and 2 who had you in past years')
+        + btns(btn('b', '📝', 'My wishlist', 'bWish'), btn('b', '📅', 'Pick dates')), 'Today at 7:05 PM', 'eJoin', true)}
+    ${msg('bot', `<div>📝 Wishlist saved! You can update it any time.</div>`, 'Today at 7:06 PM', 'eSaved', true)}`;
+
+  // scene 4a: organizer runs the draw
+  const p4 = `
+    ${msg('Dasher', `<div>names get drawn TONIGHT 🎲👀 everyone's wishlist better be done</div>`, 'Today at 9:36 PM')}
+    ${msg('Comet', `<div>been manifesting a good one all week 🔮🙏</div>`, 'Today at 9:37 PM')}
+    ${msg('Cupid', `<div>ok who ELSE can't sleep 😭🎁</div>`, 'Today at 9:38 PM')}
+    ${msg('Blitzen', `<div>if I get Dasher AGAIN I'm suing 😤</div>`, 'Today at 9:39 PM')}
+    ${msg('Donner', `<div>bestie <code>/history</code> literally stops repeats 🕰️🚫</div>`, 'Today at 9:39 PM')}
+    ${msg('bot', `<div>Ready to draw names for <b>23</b> people? This closes sign-ups, locks the rules, and DMs everyone their giftee. You won't see the results.</div>`
+        + btns(btn('g', '🎲', 'Draw names!', 'bDraw')), 'Today at 9:40 PM', 'eConfirm', true)}
+    ${msg('bot', `<div>🎲 Names drawn! Sending 23 DMs… (this takes a moment)</div>`, 'Today at 9:40 PM', 'eDrawn', true)}`;
+
+  // scene 4b: Comet's DM
+  const where = 'to <b>The Last Straw</b> on <b>Fri, Dec 18</b>';
+  const giftee = embed('green', '🎅 You\'re the Secret Santa for… <span id="vixName">Vixen!</span>',
+    `💰 <b>Budget:</b> $100<br>🗓️ <b>Gift night:</b> Fri, Dec 18<br>📍 <b>Where:</b> The Last Straw<br><br>Bring your wrapped gift ${where}. Keep it secret! 🤫 Use the buttons below to message them anonymously.`,
+    `<div class="ef"><b>🎁 Would love</b><span id="wishEcho"></span></div><div class="ef"><b>✨ Interests & hobbies</b><span id="intEcho"></span></div>`);
+  const p4b = msg('bot', giftee + btns(btn('b', '🎅', 'Who do I have?'), btn('b', '💌', 'Message my giftee'), btn('b', '🎅', 'Message my Santa'), btn('g', '🎁', 'I\'ve got my gift')),
+    'Today at 9:40 PM', 'eGiftee');
+
+  // scene 5: anonymous messages, Vixen's DMs then Comet's
+  const p5a = `
+    ${msg('bot', embed('green', '🎄 You\'re in!', 'This is where I\'ll send your giftee once names are drawn — and where anonymous messages from your Secret Santa will show up. Don\'t close your DMs! 🤫'), 'Mon at 7:05 PM')}
+    ${msg('bot', embed('', '🎅 A message from your Secret Santa', 'what\'s your hoodie size? 👀',
+        '<div class="foot">Reply below — your Santa won\'t see anything except your message.</div>')
+        + btns(btn('b', '↩️', 'Reply to my Santa', 'bReply')), 'Today at 10:12 PM', 'eAnon')}`;
+  const p5b = `
+    ${msg('bot', embed('green', '🎅 You\'re the Secret Santa for… Vixen!', '💰 <b>Budget:</b> $100 · 📍 <b>Where:</b> The Last Straw'), 'Today at 9:40 PM')}
+    ${msg('bot', `<div>🤫 Sent to Vixen!</div>`, 'Today at 10:12 PM', '', true)}
+    ${msg('bot', embed('green', '🎁 A message from your giftee, Vixen', 'M!! and make it UGLY 😂🎄')
+        + btns(btn('b', '↩️', 'Reply to my giftee')), 'Today at 10:14 PM', 'eReply')}`;
+
+  // scene 6: countdown in the channel + DM nudge
+  const p6 = `
+    ${msg('bot', embed('green', '🎲 Names have been drawn!', 'Check your DMs to find out who you\'re Secret Santa for! 🤫<br><br>🎁 Bring your wrapped gift ' + where + '!'), 'Sat at 9:40 PM')}
+    ${msg('Prancer', `<div>wait it's in 3 DAYS?? 😱 I haven't even started</div>`, 'Today at 9:01 AM')}
+    ${msg('bot', embed('green', '🎄 <b>3 days</b> until gift night at The Last Straw!', '🎁 <span id="rdy">19</span>/23 Santas have their gift ready', '', 'eCount'), 'Today at 10:00 AM', 'eCountMsg')}`;
+  const dmcard = `
+    <div class="dmcard" id="dmcard">
+      <div class="who">${av(BOT.e, BOT.c)}<b>Saint Scernding</b> sent you a DM</div>
+      ${embed('gold', '🎁 Gift night is coming up!', `Gift night is <b>in 3 days</b> — got your gift yet? Bring it ${where}.<br>Already got it? Hit the button.`)}
+      ${btns(btn('g', '🎁', 'I\'ve got my gift', 'bReady'), btn('b', '🎅', 'Who do I have?'))}
+      <div class="dmreply" id="dmreply">🎁 Nice work, Santa! Don't forget to bring it ${where}. 🎅</div>
+    </div>`;
+
+  const wishModal = `
+    <div class="overlay" id="mWish"><div class="modal" id="mWishBox">
+      <div class="mtitle"><span>🎁 Your Wishlist</span><i>✕</i></div>
+      <div class="field"><div class="flabel">WHAT WOULD YOU LOVE TO GET?</div><div class="ta tall"><span id="tyWish">Vinyl 🎶, hot sauce 🌶️, a comfy hoodie (the uglier the better)</span><span class="caret" id="cWish"></span></div></div>
+      <div class="field"><div class="flabel">INTERESTS & HOBBIES</div><div class="ta tall"><span id="tyInt">Karaoke 🎤, bouldering 🧗🏾‍♀️, terrible puns 🙃</span><span class="caret" id="cInt"></span></div></div>
+      <div class="field"><div class="flabel">PLEASE AVOID</div><div class="ta"><span class="ph">Allergies, things you already have, no candles…</span></div></div>
+      <div class="field"><div class="flabel">SIZES</div><div class="ta"><span class="ph">Shirt, hoodie, shoe, ring…</span></div></div>
+      <div class="mfoot"><span>Cancel</span>${btn('b', '', 'Submit', 'bSubmit')}</div>
+    </div></div>`;
+  const santaModal = `
+    <div class="overlay" id="mSanta"><div class="modal" id="mSantaBox">
+      <div class="mtitle"><span>🎅 Message your Secret Santa</span><i>✕</i></div>
+      <div class="field"><div class="flabel">YOUR MESSAGE</div><div class="ta tall"><span id="tyReply">M!! and make it UGLY 😂🎄</span><span class="caret" id="cReply"></span></div></div>
+      <div class="mfoot"><span>Cancel</span>${btn('b', '', 'Submit', 'bSubmit2')}</div>
+    </div></div>`;
+
+  $('discord').innerHTML = `
+    <div class="rail">
+      <div class="srv" style="background:#5865f2">💬</div><div class="sep"></div>
+      <div class="srv on" style="background:#1f6f45">🦌</div>
+      <div class="srv">🎮</div><div class="srv">🍕</div><div class="srv" style="color:#23a55a;font-size:22px">+</div>
+    </div>
+    <div class="side">${channelSide}</div>
+    <div class="main">
+      <div class="hdr" id="hdrChan"><span class="hash2">#</span>secret-santa<span class="topic">🎁 gifts · 🍻 The Last Straw · 💰 $100</span></div>
+      <div class="hdr" id="hdrDm"><span style="color:#80848e">@</span>Saint Scernding<span class="tag">APP</span></div>
+      <div class="chatwrap" id="chat">
+        <div class="pov" id="pov"></div>
+        <div class="pane" id="p2">${p2}</div>
+        <div class="pane" id="p4">${p4}</div>
+        <div class="pane" id="p4b">${p4b}</div>
+        <div class="pane" id="p5a">${p5a}</div>
+        <div class="pane" id="p5b">${p5b}</div>
+        <div class="pane" id="p6">${p6}</div>
+        ${dmcard}
+      </div>
+      <div class="auto" id="auto"><div class="autohead">SAINT SCERNDING</div>
+        <div class="row">${av(BOT.e, BOT.c)}<div><b>/santa-admin draw</b><br><small>Draw names and DM everyone their giftee 🎲</small></div></div></div>
+      <div class="input"><div class="plus">+</div><span id="inPh">Message #secret-santa</span><span class="cmd" id="inCmd"><b id="tyCmd">/santa-admin draw</b><span class="caret" id="cCmd"></span></span></div>
+    </div>
+    <div class="members" id="members"><div class="mhead">🎄 <b id="cnt">1</b> people have<br>joined so far</div><div id="memList">${members}</div></div>
+    ${wishModal}${santaModal}`;
+}
+
+function buildCountdown() {
+  $('countdown').innerHTML = `
+    <canvas id="rays" width="800" height="450"></canvas>
+    <div class="cdwrap" id="cdwrap">
+      <div class="cdtop" id="cdtop">GIFT NIGHT AT THE LAST STRAW IN…</div>
+      <div class="ring" id="ring"></div>
+      <div class="num" id="n3">3</div><div class="num" id="n2">2</div><div class="num" id="n1">1</div>
+      <div class="cdsub" id="s3">DAYS · WRAP IT 🎁</div>
+      <div class="cdsub" id="s2">DAYS · HIDE IT 🤫</div>
+      <div class="cdsub" id="s1">DAY · BRING IT 🍻</div>
+      <div id="giftnight"><div class="gn">🍻 GIFT NIGHT 🍻</div><div class="gs">The Last Straw</div></div>
+    </div>`;
+}
+
+// bar layout: left → right. Comet (the Santa) stands next to Vixen for the big reveal.
+const CROWD = ['Cupid', 'Blitzen', 'Donner', 'Comet', 'Vixen', 'Prancer', 'Dasher', 'Dancer'];
+const CX = i => 152 + i * 84, CY = 262;
+const BUBBLES = [ // [who, text, t0, t1]
+  ['Blitzen', 'CHEERS 🍻', 20.55, 21.75],
+  ['Vixen', 'IT WAS YOU?!? 😱😂', 21.75, 23.3],
+  ['Comet', 'surprise bestie 🎅', 22.15, 23.4],
+  ['Dancer', 'I GUESSED RIGHT 👑', 22.5, 23.9],
+  ['Cupid', 'best $100 ever 💸', 23.0, 24.4],
+  ['Prancer', '😂😂😂', 23.5, 24.6],
+];
+const FLIGHTS = [ // [emoji, fromIdx, toIdx, t0, dur]
+  ['🎁', 3, 4, 20.35, .7], ['🎁', 1, 2, 20.55, .75], ['🎁', 6, 7, 20.8, .7], ['🎁', 0, 1, 21.05, .7],
+  ['🎁', 5, 6, 21.25, .7], ['🎁', 2, 0, 21.5, .8], ['🎁', 7, 5, 21.7, .8],
+];
+const ITEMS = [['🍻', 110, 20.6], ['🍹', 194], ['🧃', 276], ['🎁', 356], ['🍷', 442], ['☕', 528], ['🥤', 612], ['🍻', 696, 20.6], ['🎁', 770]];
+const LAUGHS = ['😂', '🤣', '🎉', '💖', '😂', '✨', '🤣', '🥳', '😂', '🎄', '💖', '🥳'];
+const TAGWORDS = [['LIVE 🎉', 20.25, 70], ['LAUGH 😂', 20.7, 262], ['GIFT 🎁', 21.15, 520]];
+
+function buildBar() {
+  const people = CROWD.map((n, i) => `<div class="person" id="pp${i}">${P[n].bar}</div>`).join('');
+  const tags = CROWD.map((n, i) => `<div class="nametag" id="nt${i}" style="left:${CX(i)}px">${n}</div>`).join('');
+  const items = ITEMS.map(([e, x], i) => `<div class="item" id="it${i}" style="left:${x}px;top:322px">${e}</div>`).join('');
+  const bubbles = BUBBLES.map(([w, txt], i) => `<div class="bubble" id="bb${i}">${txt}</div>`).join('');
+  const flights = FLIGHTS.map(([e], i) => `<div class="fly" id="fl${i}">${e}</div>`).join('');
+  const laughs = LAUGHS.map((e, i) => `<div class="laugh" id="lg${i}">${e}</div>`).join('');
+  const words = TAGWORDS.map(([w, , x], i) => `<div class="tagword" id="tw${i}" style="left:${x}px">${w}</div>`).join('');
+  $('bar').innerHTML = `
+    <canvas id="barbg" width="800" height="450"></canvas>
+    <div class="neon" id="neon">The Last Straw</div>
+    <div class="neon2" id="neon2">★ SECRET SANTA · GIFT NIGHT ★</div>
+    <div class="tree" id="tree">🎄</div>
+    ${people}
+    <div class="fly" id="hoodie" style="font-size:54px;margin:-27px 0 0 -27px">🧥<span class="deco" style="left:6px;top:14px">🎄</span><span class="deco" style="left:30px;top:24px">⭐</span><span class="deco" style="left:14px;top:34px">🦌</span><span class="deco" style="left:33px;top:6px">🔔</span></div>
+    <div class="counter"></div>
+    ${items}${tags}${flights}${bubbles}${laughs}${words}
+    <div class="tagline2" id="tag2">ALL KINDS OF PEOPLE · ONE LEGENDARY NIGHT 🌍<small>🎅 your Secret Santa, sorted by Saint Scernding</small></div>`;
+}
+
+function buildEnd() {
+  $('end').innerHTML = `
+    <div class="santa" id="eSanta" style="font-size:64px">🎅</div>
+    <div class="logo" style="font-size:46px;margin-top:6px">Saint Scernding</div>
+    <div class="pill" id="ePill" style="margin-top:16px;background:#d4a017;color:#1a1204;font-size:19px">⭐ Open source · MIT</div>
+    <div id="eUrl" style="margin-top:14px;font-family:Consolas,monospace;font-size:21px;font-weight:700;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);padding:7px 16px;border-radius:8px">github.com/Eake123/Saint-Scernding</div>
+    <div id="eStar" style="margin-top:16px;font-size:16px;font-weight:700;color:#ffe08a">Smash that ⭐ STAR ⭐ like it owes you money 💸⭐💸</div>`;
+}
+
+// typed text: wrap each grapheme in a span before twemoji runs, then reveal a prefix
+function makeTyped(id) {
+  const el = $(id), segs = [...new Intl.Segmenter().segment(el.textContent)].map(s => s.segment);
+  el.textContent = '';
+  for (const s of segs) { const sp = document.createElement('span'); sp.textContent = s; el.appendChild(sp); }
+}
+function typeTo(id, k) {
+  const kids = $(id).children, n = Math.round(kids.length * clamp(k));
+  for (let i = 0; i < kids.length; i++) kids[i].style.display = i < n ? '' : 'none';
+}
+
+// ============================================================ cursor
+// Paths use element ids; their centres are measured once ("baked") by rendering the frame at that key's time.
+const CURSOR = [
+  { keys: [[2.85, [700, 470]], [3.55, 'bJoin'], [3.95, '@'], [5.35, 'bWish'], [5.9, '@']], clicks: [3.6, 5.45] },
+  { keys: [[5.95, 'bWish'], [7.3, [560, 260]], [7.75, 'bSubmit'], [8.3, '@']], clicks: [7.8] },
+  { keys: [[9.1, [760, 300]], [9.5, 'bDraw'], [9.95, '@']], clicks: [9.55] },
+  { keys: [[11.55, [760, 180]], [12.05, 'bReply'], [12.5, [600, 380]], [13.05, 'bSubmit2'], [13.35, '@']], clicks: [12.1, 13.1] },
+  { keys: [[14.95, [700, 440]], [15.5, 'bReady'], [16.2, '@']], clicks: [15.55] },
+];
+function centerOf(id) {
+  const r = $(id).getBoundingClientRect(), s = $('stage').getBoundingClientRect();
+  return [r.left - s.left + r.width / 2, r.top - s.top + r.height / 2];
+}
+function bakeCursor() {
+  for (const path of CURSOR) {
+    let last = null;
+    for (const key of path.keys) {
+      if (typeof key[1] === 'string' && key[1] !== '@') { renderScenes(key[0]); key[1] = centerOf(key[1]); }
+      else if (key[1] === '@') key[1] = last;
+      last = key[1];
+    }
+  }
+}
+function renderCursor(t) {
+  const cur = $('cursor'), rip = $('ripple');
+  vis(cur, false); vis(rip, false);
+  for (const { keys, clicks } of CURSOR) {
+    if (t < keys[0][0] || t > keys[keys.length - 1][0]) continue;
+    let i = 0; while (i < keys.length - 2 && t > keys[i + 1][0]) i++;
+    const [ta, pa] = keys[i], [tb, pb] = keys[i + 1];
+    const k = eio(seg(t, ta, tb));
+    const x = lerp(pa[0], pb[0], k), y = lerp(pa[1], pb[1], k);
+    let sc = 1;
+    for (const c of clicks) {
+      if (t >= c - .02 && t < c + .12) sc = .78;
+      const d = t - c;
+      if (d >= 0 && d < .4) {
+        const r = 6 + d * 80;
+        Object.assign(rip.style, { left: x - r + 'px', top: y - r + 'px', width: r * 2 + 'px', height: r * 2 + 'px', opacity: 1 - d / .4 });
+        vis(rip, true);
+      }
+    }
+    cur.style.transform = `translate(${x - 3}px,${y - 2}px) scale(${sc})`;
+    vis(cur, true);
+  }
+}
+
+// ============================================================ scene renderers
+function sceneOpacity(el, t, a, b, fadeIn = .22) {
+  const on = t >= a && t < b;
+  el.style.display = on ? '' : 'none';
+  el.style.opacity = on ? eo(seg(t, a, a + fadeIn)) : 0;
+  return on;
+}
+
+function renderTitle(t) {
+  const el = $('title');
+  if (!sceneOpacity(el, t, 0, T.join + .25, 0)) return;
+  const k = eback(seg(t, -.35, .45));
+  $('tSanta').style.transform = `scale(${lerp(.2, 1, k)}) rotate(${Math.sin(t * 3) * 6}deg)`;
+  [...$('tLogo').children].forEach((s, i) => {
+    const kk = seg(t, .12 + i * .045, .42 + i * .045);
+    s.style.opacity = kk; s.style.transform = `translateY(${(1 - eback(kk)) * -40}px) scale(${lerp(1.6, 1, eo(kk))})`;
+  });
+  const kt = eo(seg(t, .8, 1.2));
+  $('tTag').style.opacity = kt; $('tTag').style.transform = `translateY(${(1 - kt) * 12}px)`;
+  [...$('tCrew').children].forEach((a, i) => {
+    const kk = seg(t, 1.2 + i * .07, 1.5 + i * .07);
+    a.style.opacity = kk; a.style.transform = `scale(${eback(kk)}) translateY(${Math.sin(t * 6 + i) * 2 * kk}px)`;
+  });
+  $('tCap').style.opacity = eo(seg(t, 1.8, 2.1));
+  el.style.opacity = t > T.join ? 1 - seg(t, T.join, T.join + .25) : 1;
+}
+
+function setPov(side, name) {
+  $('sideSrv').style.display = side === 'srv' ? '' : 'none'; $('sideDm').style.display = side === 'dm' ? '' : 'none';
+  vis($('hdrChan'), side === 'srv'); $('hdrChan').style.display = side === 'srv' ? '' : 'none';
+  $('hdrDm').style.display = side === 'dm' ? '' : 'none';
+  vis($('members'), side === 'srv');
+  $('members').style.display = side === 'srv' ? '' : 'none';
+  $('inPh').textContent = side === 'srv' ? 'Message #secret-santa' : 'Message @Saint Scernding';
+  const p = P[name];
+  $('meAv').innerHTML = $('avCache_' + name).innerHTML;
+  $('meName').textContent = name;
+}
+
+function renderDiscord(t) {
+  const el = $('discord');
+  if (!sceneOpacity(el, t, T.join, T.count + .12)) return;
+  el.style.transform = '';
+  for (const id of ['p2', 'p4', 'p4b', 'p5a', 'p5b', 'p6']) vis($(id), false);
+  vis($('mWish'), false); vis($('mSanta'), false); vis($('dmcard'), false); vis($('dmreply'), false);
+  vis($('auto'), false); vis($('pov'), false);
+  for (const id of ['cWish', 'cInt', 'cReply', 'cCmd']) vis($(id), false);
+  $('inCmd').style.display = 'none'; $('inPh').style.display = '';
+
+  if (t < T.draw) {                                     // join + wishlist, as Vixen
+    setPov('srv', 'Vixen');
+    vis($('p2'), true);
+    pop($('p2').children[0], t, 0); pop($('p2').children[1], t, T.join + .15, .35);
+    pop($('eJoin'), t, 3.9); pop($('eSaved'), t, 7.95);
+    // live headcount: first join is Vixen's click, then everyone piles in
+    const joins = JOINERS.map((_, i) => 3.62 + 1.55 * Math.pow(i / 22, .85));
+    const n = joins.filter(j => t >= j).length;
+    $('cnt').textContent = Math.max(n, 0);
+    [...$('memList').children].forEach(m => {
+      const i = +m.dataset.i;
+      m.style.display = i < n ? '' : 'none';
+      const k = eback(seg(t, joins[i], joins[i] + .25));
+      m.style.transform = `scale(${lerp(.3, 1, k)})`; m.style.opacity = seg(t, joins[i], joins[i] + .12);
+    });
+    $('cnt').parentElement.style.opacity = n ? 1 : .5;
+    // wishlist modal
+    if (t >= T.wish && t < 8.05) {
+      vis($('mWish'), true);
+      const kin = eo(seg(t, T.wish, T.wish + .2)), kout = seg(t, 7.88, 8.05);
+      $('mWish').style.opacity = kin * (1 - kout);
+      $('mWishBox').style.transform = `translate(-50%,-50%) scale(${lerp(.9, 1, kin)})`;
+      typeTo('tyWish', seg(t, 6.0, 6.95)); typeTo('tyInt', seg(t, 7.0, 7.55));
+      const blink = Math.floor(t * 3) % 2 === 0;
+      vis($('cWish'), t < 7.0 && blink); vis($('cInt'), t >= 7.0 && blink);
+    }
+  } else if (t < T.dm) {                                // organizer draws names
+    setPov('srv', 'Dasher');
+    vis($('p4'), true);
+    [...$('p4').children].slice(0, 5).forEach(m => pop(m, t, 0));
+    pop($('eConfirm'), t, 9.05); pop($('eDrawn'), t, 9.65);
+    const typing = t < 9.05;
+    $('inCmd').style.display = typing && t >= 8.4 ? '' : 'none';
+    $('inPh').style.display = typing && t >= 8.4 ? 'none' : '';
+    typeTo('tyCmd', seg(t, 8.4, 8.8));
+    vis($('cCmd'), Math.floor(t * 3) % 2 === 0);
+    vis($('auto'), t >= 8.55 && t < 9.05);
+    $('cnt').textContent = 23;
+    [...$('memList').children].forEach(m => { m.style.display = ''; m.style.transform = ''; m.style.opacity = 1; });
+  } else if (t < T.anon) {                              // the DM
+    setPov('dm', 'Comet');
+    vis($('p4b'), true);
+    pop($('eGiftee'), t, T.dm + .1, .35);
+    typeTo('wishEcho', 1); typeTo('intEcho', 1);
+    const g = seg(t, 10.35, 10.9);
+    $('vixName').style.textShadow = `0 0 ${Math.sin(g * Math.PI) * 16}px rgba(255,215,94,${Math.sin(g * Math.PI)})`;
+    $('vixName').style.color = g > 0 && g < 1 ? '#ffe08a' : '';
+    vis($('pov'), true); $('pov').textContent = '👀 Comet\'s DMs';
+  } else if (t < T.post) {                              // anonymous messages
+    const b = t >= T.anonB;
+    setPov('dm', b ? 'Comet' : 'Vixen');
+    vis($('pov'), true); $('pov').innerHTML = b ? $('povComet').innerHTML : $('povVixen').innerHTML;
+    if (!b) {
+      vis($('p5a'), true);
+      pop($('p5a').children[0], t, 0); pop($('eAnon'), t, T.anon + .15, .35);
+      if (t >= 12.15 && t < 13.3) {
+        vis($('mSanta'), true);
+        const kin = eo(seg(t, 12.15, 12.35)), kout = seg(t, 13.15, 13.3);
+        $('mSanta').style.opacity = kin * (1 - kout);
+        $('mSantaBox').style.transform = `translate(-50%,-50%) scale(${lerp(.9, 1, kin)})`;
+        typeTo('tyReply', seg(t, 12.35, 12.9));
+        vis($('cReply'), Math.floor(t * 3) % 2 === 0);
+      }
+    } else {
+      vis($('p5b'), true);
+      [...$('p5b').children].slice(0, 2).forEach(m => pop(m, t, 0));
+      pop($('eReply'), t, T.anonB + .12, .35);
+    }
+  } else {                                              // countdown post + "got your gift?"
+    setPov('srv', 'Comet');
+    vis($('p6'), true);
+    [...$('p6').children].slice(0, 2).forEach(m => pop(m, t, 0));
+    pop($('eCountMsg'), t, T.post + .12, .35);
+    $('rdy').textContent = t >= 15.7 ? 20 : 19;
+    $('rdy').style.color = t >= 15.7 && t < 16.1 ? '#57f287' : '';
+    $('cnt').textContent = 23;
+    [...$('memList').children].forEach(m => { m.style.display = ''; m.style.transform = ''; m.style.opacity = 1; });
+    if (t >= 14.85) {
+      vis($('dmcard'), true);
+      const k = eback(seg(t, 14.85, 15.2));
+      $('dmcard').style.transform = `translateX(${(1 - k) * 360}px)`;
+      vis($('dmreply'), t >= 15.65);
+      $('dmreply').style.opacity = eo(seg(t, 15.65, 15.85));
+    }
+    // push in toward the countdown before the big numbers take over
+    const z = eio(seg(t, 16.15, 16.62));
+    el.style.transform = `scale(${1 + z * .5})`;
+    el.style.transformOrigin = '38% 58%';
+  }
+  // pressed-button feedback
+  for (const [id, c] of [['bJoin', 3.6], ['bWish', 5.45], ['bSubmit', 7.8], ['bDraw', 9.55], ['bReply', 12.1], ['bSubmit2', 13.1], ['bReady', 15.55]])
+    $(id).style.filter = t >= c - .02 && t < c + .18 ? 'brightness(.75)' : '';
+}
+
+const CD = [['3', 16.5, 'rgb(196,30,58)'], ['2', 17.25, 'rgb(22,125,74)'], ['1', 18.0, 'rgb(212,160,23)']];
+const GN = 18.75;
+function renderCountdown(t) {
+  const el = $('countdown');
+  if (!sceneOpacity(el, t, T.count - .12, T.bar + .3, .15)) return;
+  let col = '#2a0a3a', slam = GN;
+  for (const [, s, c] of CD) if (t >= s) { col = c; slam = s; }
+  if (t >= GN) { col = 'rgb(90,20,120)'; slam = GN; }
+  // rays + background
+  const cv = $('rays'), g = cv.getContext('2d');
+  g.fillStyle = col; g.fillRect(0, 0, 800, 450);
+  const grd = g.createRadialGradient(400, 200, 20, 400, 200, 480);
+  grd.addColorStop(0, 'rgba(255,255,255,.2)'); grd.addColorStop(1, 'rgba(0,0,0,.7)');
+  g.save(); g.translate(400, 200); g.rotate(t * .9);
+  g.fillStyle = 'rgba(255,255,255,.11)';
+  for (let i = 0; i < 14; i++) { g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, 700, i * Math.PI / 7, i * Math.PI / 7 + Math.PI / 14); g.fill(); }
+  g.restore();
+  g.fillStyle = grd; g.fillRect(0, 0, 800, 450);
+  // shake on each slam
+  const d = t - slam, shake = d >= 0 && d < .25 ? (1 - d / .25) * 9 : 0;
+  $('cdwrap').style.transform = `translate(${Math.sin(t * 90) * shake}px,${Math.cos(t * 77) * shake}px)`;
+  $('cdtop').style.opacity = t < GN ? 1 : 0;
+  CD.forEach(([n, s], i) => {
+    const e = i < 2 ? CD[i + 1][1] : GN;
+    const num = $('n' + n), sub = $('s' + n);
+    const on = t >= s && t < e;
+    vis(num, on); vis(sub, on);
+    if (!on) return;
+    const kin = seg(t, s, s + .22), kout = seg(t, e - .12, e);
+    num.style.transform = `scale(${lerp(3.2, 1, eo(kin)) * (1 + kout * .6)})`;
+    num.style.opacity = kin * (1 - kout);
+    sub.style.opacity = seg(t, s + .12, s + .3) * (1 - kout);
+    sub.style.transform = `translateY(${(1 - eo(seg(t, s + .12, s + .3))) * 20}px)`;
+  });
+  // shockwave ring
+  const r = $('ring'), rd = t - slam;
+  vis(r, rd >= 0 && rd < .45);
+  const rr = 40 + rd * 700;
+  Object.assign(r.style, { width: rr * 2 + 'px', height: rr * 2 + 'px', marginLeft: -rr + 'px', marginTop: -rr + 'px', opacity: 1 - rd / .45 });
+  const gn = $('giftnight');
+  vis(gn, t >= GN);
+  const kg = eback(seg(t, GN, GN + .3));
+  gn.style.transform = `scale(${lerp(.3, 1, kg) + Math.sin(t * 20) * .01})`;
+  gn.style.opacity = seg(t, GN, GN + .1);
+}
+
+function drawBarBg(t) {
+  const g = $('barbg').getContext('2d');
+  const wall = g.createLinearGradient(0, 0, 0, 450);
+  wall.addColorStop(0, '#1b1033'); wall.addColorStop(.45, '#40183f'); wall.addColorStop(.75, '#7a3420'); wall.addColorStop(1, '#2a1208');
+  g.fillStyle = wall; g.fillRect(0, 0, 800, 450);
+  // warm glow behind the crowd
+  const glow = g.createRadialGradient(420, 260, 10, 420, 260, 380);
+  glow.addColorStop(0, 'rgba(255,170,70,.45)'); glow.addColorStop(1, 'rgba(255,120,40,0)');
+  g.fillStyle = glow; g.fillRect(0, 0, 800, 450);
+  // back shelves with bottles
+  const R = rng(7);
+  for (const y of [158, 214]) {
+    g.fillStyle = 'rgba(40,18,10,.9)'; g.fillRect(90, y, 710, 6);
+    for (let x = 100; x < 790; x += 15 + R() * 10) {
+      const h = 24 + R() * 18, w = 8 + R() * 4, hue = [140, 30, 350, 200, 45][Math.floor(R() * 5)];
+      g.fillStyle = `hsla(${hue},70%,${38 + R() * 20}%,.85)`;
+      g.fillRect(x, y - h, w, h); g.fillRect(x + w / 2 - 1.5, y - h - 8, 3, 8);
+      g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(x + 1.5, y - h + 3, 1.5, h - 6);
+    }
+  }
+  // string lights: two sagging strands with twinkling bulbs
+  const cols = ['#ff3b3b', '#3bff7a', '#ffd23b', '#3bc8ff', '#ff5ef0'];
+  for (const [y0, sag, off] of [[96, 34, 0], [118, 26, 1]]) {
+    g.strokeStyle = 'rgba(20,10,10,.8)'; g.lineWidth = 1.5; g.beginPath();
+    for (let x = 0; x <= 800; x += 10) { const y = y0 + sag * Math.sin(Math.PI * x / 800); x ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.stroke();
+    for (let i = 0; i < 22; i++) {
+      const x = 18 + i * 36.5 + off * 18, y = y0 + sag * Math.sin(Math.PI * x / 800) + 5;
+      const tw = .55 + .45 * Math.sin(t * 7 + i * 1.7 + off * 2);
+      const c = cols[(i + off * 2) % cols.length];
+      g.globalAlpha = tw * .45; g.fillStyle = c; g.beginPath(); g.arc(x, y, 10, 0, 7); g.fill();
+      g.globalAlpha = .6 + tw * .4; g.beginPath(); g.arc(x, y, 3.8, 0, 7); g.fill();
+      g.globalAlpha = 1;
+    }
+  }
+}
+
+function renderBar(t) {
+  const el = $('bar');
+  if (!sceneOpacity(el, t, T.bar, T.end + .3, 0)) return;
+  drawBarBg(t);
+  const lt = t - T.bar;
+  // neon sign buzzes on
+  const flick = lt < .7 ? ([.1, .9, .2, 1, .4, 1, 1][Math.floor(lt * 10)] ?? 1) : 1;
+  $('neon').style.opacity = flick; $('neon2').style.opacity = lt < .9 ? (lt > .75 ? 1 : .15) : 1;
+  $('tree').style.transform = `rotate(${Math.sin(t * 2) * 2}deg)`;
+  const party = seg(t, 23.4, 23.7);
+  CROWD.forEach((n, i) => {
+    const p = $('pp' + i), big = n === 'Dancer' ? 1.3 : 1, k = big * eback(seg(t, T.bar + .1 + i * .06, T.bar + .45 + i * .06));
+    vis(p, t >= T.bar + .1 + i * .06);
+    const bob = Math.abs(Math.sin(t * (5 + party * 3) + i * 1.3)) * (4 + party * 10);
+    const laugh = BUBBLES.some(([w, , a, b]) => w === n && t >= a && t < b) ? Math.sin(t * 30) * 3 : 0;
+    p.style.left = CX(i) + 'px'; p.style.top = CY - bob + 'px';
+    p.style.transform = `scale(${k}) rotate(${laugh + Math.sin(t * 3 + i) * 4}deg)`;
+    vis($('nt' + i), t >= T.bar + .3);
+  });
+  ITEMS.forEach(([, , clink], i) => {
+    const b = clink && t >= clink && t < clink + .5 ? Math.sin((t - clink) / .5 * Math.PI) * 14 : 0;
+    $('it' + i).style.transform = `translate(-50%,-100%) translateY(${-b}px) rotate(${b}deg)`;
+  });
+  FLIGHTS.forEach(([, a, b, t0, dur], i) => {
+    const f = $('fl' + i), k = seg(t, t0, t0 + dur);
+    vis(f, t >= t0 && t < t0 + dur);
+    const x = lerp(CX(a), CX(b), eio(k)), y = lerp(236, 236, k) - Math.sin(k * Math.PI) * 90;
+    f.style.left = x + 'px'; f.style.top = y + 'px'; f.style.transform = `rotate(${k * 360}deg) scale(${1 + Math.sin(k * Math.PI) * .3})`;
+  });
+  // Vixen unwraps the ugliest hoodie alive
+  const h = $('hoodie'), hk = seg(t, 21.35, 21.75);
+  vis(h, t >= 21.35);
+  h.style.left = CX(4) + 'px'; h.style.top = lerp(250, 186, eback(hk)) + 'px';
+  h.style.transform = `scale(${eback(hk)}) rotate(${Math.sin(t * 8) * 8}deg)`;
+  if (t >= 21.75) { h.style.top = 186 - Math.abs(Math.sin(t * 6)) * 6 + 'px'; }
+  BUBBLES.forEach(([w, , a, b], i) => {
+    const bb = $('bb' + i), on = t >= a && t < b;
+    vis(bb, on); if (!on) return;
+    const idx = CROWD.indexOf(w), k = eback(seg(t, a, a + .22)), out = seg(t, b - .15, b);
+    let y = CY - 44;
+    if (w === 'Vixen') y = 150;
+    bb.style.left = clamp(CX(idx), 90, 715) + 'px'; bb.style.top = y + 'px';
+    bb.style.transform = `translate(-50%,-100%) scale(${k * (1 - out)})`;
+  });
+  LAUGHS.forEach((e, i) => {
+    const l = $('lg' + i), t0 = 21.8 + i * .2, d = t - t0;
+    vis(l, d >= 0 && d < 1.6);
+    const x = 130 + ((i * 263) % 620);
+    l.style.left = x + Math.sin(d * 4 + i) * 12 + 'px'; l.style.top = 200 - d * 110 + 'px';
+    l.style.opacity = 1 - seg(d, 1.1, 1.6); l.style.transform = `scale(${eback(seg(d, 0, .25))})`;
+  });
+  TAGWORDS.forEach(([, t0], i) => {
+    const w = $('tw' + i), on = t >= t0 && t < 22.4;
+    vis(w, on); if (!on) return;
+    const k = seg(t, t0, t0 + .18), out = seg(t, 22.2, 22.4);
+    w.style.transform = `scale(${lerp(2.6, 1, eo(k))}) rotate(${(i - 1) * -3}deg)`;
+    w.style.opacity = k * (1 - out);
+  });
+  const t2 = $('tag2'), k2 = seg(t, 22.45, 22.75);
+  vis(t2, t >= 22.45);
+  t2.style.opacity = k2; t2.style.transform = `translateY(${(1 - eo(k2)) * 24}px)`;
+}
+
+function renderEnd(t) {
+  const el = $('end');
+  if (!sceneOpacity(el, t, T.end, DURATION + 1, .3)) return;
+  const lt = t - T.end;
+  $('eSanta').style.transform = `scale(${eback(seg(lt, 0, .45))}) rotate(${Math.sin(t * 3) * 7}deg)`;
+  const kp = eback(seg(lt, .35, .7));
+  $('ePill').style.transform = `scale(${kp})`;
+  const ku = eo(seg(lt, .6, .95));
+  $('eUrl').style.opacity = ku; $('eUrl').style.transform = `translateY(${(1 - ku) * 14}px)`;
+  $('eStar').style.opacity = eo(seg(lt, 1.05, 1.35));
+}
+
+// ============================================================ fx layer: snow + confetti + flash
+const SNOW = (() => { const r = rng(42); return Array.from({ length: 110 }, () => ({ x: r() * 800, y: r() * 450, s: .8 + r() * 2.4, v: 18 + r() * 40, w: r() * 6 })); })();
+const BURSTS = [ // [t0, x, y, count, seed]
+  [3.62, 540, 160, 40, 1], [9.58, 330, 300, 70, 9], [15.58, 610, 190, 36, 2], [GN, 400, 200, 110, 3],
+  [20.1, 250, 330, 70, 4], [20.1, 560, 330, 70, 5], [21.45, CX(4), 250, 50, 6], [23.45, 400, 360, 120, 7], [T.end + .35, 400, 230, 90, 8],
+];
+const CONF_COLS = ['#ff4d5e', '#2ecc71', '#ffd23b', '#ffffff', '#4fc3ff', '#ff5ef0'];
+const PARTS = BURSTS.map(([, , , n, seed]) => { const r = rng(seed * 99); return Array.from({ length: n }, () => {
+  const a = r() * Math.PI * 2, sp = 140 + r() * 300;
+  return { vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 180, rot: r() * 6, vr: (r() - .5) * 18, w: 5 + r() * 5, h: 3 + r() * 4, c: CONF_COLS[Math.floor(r() * CONF_COLS.length)] };
+}); });
+
+function renderFx(t) {
+  const g = $('fx').getContext('2d');
+  g.clearRect(0, 0, 800, 450);
+  const snowy = t < T.join + .2 ? 1 : t >= T.count && t < T.bar ? .8 : t >= T.bar && t < T.end ? .35 : t >= T.end ? 1 : 0;
+  if (snowy) {
+    g.fillStyle = '#fff';
+    for (const f of SNOW) {
+      const y = (f.y + t * f.v) % 470 - 10, x = (f.x + Math.sin(t * 1.3 + f.w) * 12 + 800) % 800;
+      g.globalAlpha = snowy * (.35 + f.s / 5); g.beginPath(); g.arc(x, y, f.s, 0, 7); g.fill();
+    }
+    g.globalAlpha = 1;
+  }
+  BURSTS.forEach(([t0, x0, y0], bi) => {
+    const d = t - t0;
+    if (d < 0 || d > 2.4) return;
+    for (const p of PARTS[bi]) {
+      const drag = 1 - Math.exp(-d * 1.6);
+      const x = x0 + p.vx * drag / 1.6, y = y0 + p.vy * drag / 1.6 + 170 * d * d;
+      g.save(); g.translate(x, y); g.rotate(p.rot + p.vr * d);
+      g.globalAlpha = 1 - seg(d, 1.7, 2.4); g.fillStyle = p.c;
+      g.fillRect(-p.w / 2, -p.h / 2 * Math.abs(Math.cos(d * 9 + p.rot)), p.w, p.h * Math.abs(Math.cos(d * 9 + p.rot)) + .6);
+      g.restore();
+    }
+  });
+  // white flash into the bar
+  $('flash').style.opacity = t >= T.bar - .12 && t < T.bar + .45 ? (t < T.bar ? seg(t, T.bar - .12, T.bar) : 1 - seg(t, T.bar, T.bar + .45)) : 0;
+}
+
+// ============================================================ entry point
+function renderScenes(t) {
+  renderTitle(t); renderDiscord(t); renderCountdown(t); renderBar(t); renderEnd(t);
+}
+window.render = function (t) {
+  t = ((t % DURATION) + DURATION) % DURATION;
+  renderScenes(t); renderFx(t); renderCursor(t);
+};
+
+async function init() {
+  buildTitle(); buildDiscord(); buildCountdown(); buildBar(); buildEnd();
+  // hidden stash of pre-parsed avatars / labels that renderers copy from
+  const stash = document.createElement('div'); stash.style.display = 'none';
+  stash.innerHTML = Object.entries(P).map(([n, p]) => `<div id="avCache_${n}">${av(p.e, p.c)}</div>`).join('')
+    + `<div id="povVixen">👀 Vixen's DMs</div><div id="povComet">👀 Comet's DMs (the Santa)</div>`;
+  document.body.appendChild(stash);
+  $('wishEcho').textContent = $('tyWish').textContent; $('intEcho').textContent = $('tyInt').textContent;
+  for (const id of ['tyWish', 'tyInt', 'tyReply', 'tyCmd']) makeTyped(id);
+  await Promise.all(['400 13px "Noto Sans"', '700 13px "Noto Sans"', '800 13px "Noto Sans"', '40px Bungee', '40px Pacifico'].map(f => document.fonts.load(f)));
+  twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });
+  await Promise.all([...document.images].map(i => i.decode().catch(() => {})));
+  window.__broken = [...document.images].filter(i => !i.naturalWidth).map(i => i.alt);
+  bakeCursor();
+  window.render(0);
+  window.__ready = true;
+  // opened by hand (not by render.py): just play it on a loop
+  if (!navigator.webdriver) { const t0 = performance.now(); const loop = now => { window.render((now - t0) / 1000); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+}
+init();
+</script>
+</body>
+</html>
