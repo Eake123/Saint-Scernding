@@ -1,0 +1,8 @@
+# secrets & event data — never commit these
+.env
+santa.db
+santa.db-*
+
+.venv/
+__pycache__/
+.pytest_cache/
