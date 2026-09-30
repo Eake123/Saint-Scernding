@@ -14,3 +14,10 @@ jobs:
           python-version: "3.11"
       - run: pip install -r requirements-dev.txt
       - run: pytest -q
+
+  test2:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          pwd
+          ls
