@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import logging
+import math
 from datetime import date, datetime
 
 import discord
 from discord.ext import commands, tasks
 
-from .. import config, ui
+from .. import config, runtime, ui
 from ..actions import send_dm
 
 log = logging.getLogger("santa")
@@ -29,6 +30,13 @@ class Scheduler(commands.Cog):
     @tasks.loop(minutes=1)
     async def tick(self):
         try:
+            runtime.write_heartbeat(
+                connected=not self.bot.is_closed() and self.bot.is_ready(),
+                latency_ms=round(self.bot.latency * 1000) if math.isfinite(self.bot.latency) else None,
+                guild=bool(self.bot.get_guild(config.GUILD_ID)),
+                participants=len(self.db.participants()),
+                phase=self.db.phase,
+            )
             await self.post_due_reminders()
             now = datetime.now(config.TIMEZONE)
             if now.hour >= config.DAILY_POST_HOUR and self.db.get("last_daily") != now.date().isoformat():

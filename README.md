@@ -106,10 +106,22 @@ When you see `🎅 Logged in as … — ready!`, the bot is live and its slash c
 
 ---
 
-## ☁️ Hosting 24/7
-Running on your own PC is fine, and reminders missed while it's off are posted when it comes back.
-To keep it always on, any small always-on machine works: a Raspberry Pi, an old laptop, or a cheap VPS.
-Copy the folder along with your `.env`, then run `python bot.py` under something that restarts it (systemd, pm2, Docker…).
+## ☁️ Keeping it running 24/7
+**Windows (recommended if your PC is usually on):** run this once in PowerShell from the bot's folder:
+```powershell
+.\install_autostart.ps1              # starts hidden when you log in, no admin needed
+.\install_autostart.ps1 -AtStartup   # or: starts when Windows boots, even before login (run PowerShell as admin)
+.\install_autostart.ps1 -Remove      # undo
+```
+It registers a Scheduled Task that runs `supervisor.py`, which restarts the bot if it ever stops.
+Only one copy of the bot can run at a time. `start.bat` will tell you if the background one is already running.
+
+**Is it OK?** Run `.venv\Scripts\python healthcheck.py` to see whether it's connected, its last heartbeat,
+restarts and recent errors. Logs are in `logs/`.
+
+**Elsewhere:** any small always-on machine works, such as a Raspberry Pi or a cheap VPS. Copy the folder along with your `.env`,
+then run `python supervisor.py` (or `bot.py` under systemd, pm2 or Docker). Reminders that were due while the bot was off get
+posted when it comes back.
 
 ## 🛠️ Development
 ```bash

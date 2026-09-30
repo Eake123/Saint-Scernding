@@ -2,6 +2,7 @@
 .env
 santa.db
 santa.db-*
+logs/
 
 .venv/
 __pycache__/

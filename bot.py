@@ -1,12 +1,14 @@
-"""Secret Santa bot. Run with start.bat (or: .venv\\Scripts\\python bot.py)."""
+"""Secret Santa bot. Run with start.bat (or: .venv\\Scripts\\python bot.py).
+For always-on use, run install_autostart.ps1 once instead — it keeps the bot running via supervisor.py."""
 import logging
+import sys
 
 import anthropic
 import discord
 from discord import app_commands
 from discord.ext import commands
 
-from santa import config
+from santa import config, runtime
 from santa.actions import reply
 from santa.cogs.admin import NotOrganizer
 from santa.db import DB
@@ -49,9 +51,18 @@ class SantaBot(commands.Bot):
 
 
 def main():
+    lock = runtime.acquire_lock("bot.lock")
+    if lock is None:
+        print("Saint Scernding is already running on this computer (probably started automatically). "
+              "Close that one first if you want to run it here.", file=sys.stderr)
+        sys.exit(runtime.EXIT_ALREADY_RUNNING)
     if not config.DISCORD_TOKEN:
         raise SystemExit("DISCORD_TOKEN is missing from your .env file. See README.md.")
-    discord.utils.setup_logging(level=logging.INFO)
+
+    discord.utils.setup_logging(handler=runtime.file_handler("santa.log"), level=logging.INFO)
+    if runtime.has_console():
+        discord.utils.setup_logging(level=logging.INFO)
+    runtime.quiet_voice_warnings()
     SantaBot().run(config.DISCORD_TOKEN, log_handler=None)
 
 
