@@ -22,4 +22,5 @@ ORGANIZER_ID = _id("ORGANIZER_ID")
 TIMEZONE = ZoneInfo(os.getenv("TIMEZONE", "America/New_York").strip())
 DAILY_POST_HOUR = int(os.getenv("DAILY_POST_HOUR", "10"))
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip() or None
+REPO_URL = os.getenv("REPO_URL", "https://github.com/Eake123/Saint-Scernding").strip()
 DB_PATH = ROOT / "santa.db"

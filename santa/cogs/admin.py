@@ -13,6 +13,7 @@ from discord.ext import commands
 from .. import actions, config, ui
 from ..actions import reply, send_dm
 from ..draw import DrawError, add_person, draw, make_allowed, remove_person
+from ..intro import intro_embeds, intro_view
 
 log = logging.getLogger("santa")
 
@@ -156,18 +157,37 @@ class Admin(commands.GroupCog, group_name="santa-admin", group_description="Orga
         await reply(interaction, embed=e)
         await actions.refresh_signup_panel(self.bot)
 
+    async def _post_panel(self, channel) -> None:
+        msg = await channel.send(embed=actions.signup_panel_embed(self.db),
+                                 view=ui.buttons("join", "wishlist", "dates", "leave"))
+        self.db.set("panel_channel_id", channel.id)
+        self.db.set("panel_message_id", msg.id)
+
+    @app_commands.command(name="intro", description="Post the big hype explainer 🎉 (+ the sign-up panel under it)")
+    @app_commands.describe(channel="Where to post it (defaults to the Secret Santa channel, or here)",
+                           with_signup="Also post the live sign-up panel underneath (default yes)")
+    async def intro(self, interaction: discord.Interaction, channel: discord.TextChannel | None = None,
+                    with_signup: bool = True):
+        channel = channel or await self.channel(interaction)
+        try:
+            await channel.send(embeds=intro_embeds(self.db), view=intro_view())
+            if with_signup:
+                await self._post_panel(channel)
+        except discord.Forbidden:
+            await reply(interaction, f"❌ I don't have permission to post in {channel.mention}.")
+            return
+        await reply(interaction, f"🎉 Intro posted in {channel.mention}. Tip: set `venue`, `budget` and "
+                                 "`event_date` with `/santa-admin setup` first so the intro shows them.")
+
     @app_commands.command(name="post-signup", description="Post the sign-up panel with a Join button")
     @app_commands.describe(channel="Where to post it (defaults to the Secret Santa channel, or here)")
     async def post_signup(self, interaction: discord.Interaction, channel: discord.TextChannel | None = None):
         channel = channel or await self.channel(interaction)
         try:
-            msg = await channel.send(embed=actions.signup_panel_embed(self.db),
-                                     view=ui.buttons("join", "wishlist", "dates", "leave"))
+            await self._post_panel(channel)
         except discord.Forbidden:
             await reply(interaction, f"❌ I don't have permission to post in {channel.mention}.")
             return
-        self.db.set("panel_channel_id", channel.id)
-        self.db.set("panel_message_id", msg.id)
         await reply(interaction, f"✅ Sign-up panel posted in {channel.mention}. The counter on it updates live.")
 
     @app_commands.command(name="signups", description="Open or close sign-ups")

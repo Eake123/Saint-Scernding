@@ -152,6 +152,12 @@ async def test_full_season(tmp_path):
     await call(admin.post_signup, admin, FakeInteraction(bot, ORG))
     assert "The Last Straw" in bot.channel.text()
 
+    await call(admin.intro, admin, FakeInteraction(bot, ORG))
+    intro = next(i for i in bot.channel.items if getattr(i, "embeds", None))
+    assert sum(len(e) for e in intro.embeds) <= 6000  # Discord's per-message limit
+    assert "OPEN SOURCE" in "".join(e.title for e in intro.embeds)
+    assert any(getattr(b, "url", None) == config.REPO_URL for b in intro.view.children)
+
     for uid in people:
         i = FakeInteraction(bot, uid)
         await actions.join(i)
