@@ -1,6 +1,6 @@
-# 🎅 Secret Santa Discord Bot
+# 🎅 Saint Scernding
 
-A self-hosted Discord bot that runs your whole Secret Santa for an **in-person gift exchange**:
+**A Secret Santa Discord bot.** A self-hosted Discord bot that runs your whole Secret Santa for an **in-person gift exchange**:
 sign-ups, wishlists, a date poll, a fair *blind* draw, anonymous messages, "got your gift?" nudges, and a
 hall of fame so nobody gets the same person twice.
 
@@ -58,8 +58,8 @@ Discord **User Settings → Advanced → Developer Mode: ON**, then:
 
 ### 3. Configure
 ```bash
-git clone https://github.com/<you>/<this-repo>.git
-cd <this-repo>
+git clone https://github.com/Eake123/Saint-Scernding.git
+cd Saint-Scernding
 cp .env.example .env
 ```
 Fill in `.env`: `DISCORD_TOKEN`, `GUILD_ID` (server ID), `ORGANIZER_ID` (your user ID) and `TIMEZONE`.
