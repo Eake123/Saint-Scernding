@@ -13,13 +13,10 @@ from discord.ext import commands
 from .. import actions, config, ui
 from ..actions import reply, send_dm
 from ..draw import DrawError, add_person, draw, make_allowed, remove_person
+from ..errors import NotOrganizer
 from ..intro import intro_embeds, intro_view
 
 log = logging.getLogger("santa")
-
-
-class NotOrganizer(app_commands.CheckFailure):
-    pass
 
 
 class Confirm(discord.ui.View):

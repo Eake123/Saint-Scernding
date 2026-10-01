@@ -10,8 +10,8 @@ from discord.ext import commands
 
 from santa import config, runtime
 from santa.actions import reply
-from santa.cogs.admin import NotOrganizer
 from santa.db import DB
+from santa.errors import NotOrganizer
 
 log = logging.getLogger("santa")
 
@@ -39,6 +39,7 @@ class SantaBot(commands.Bot):
     async def on_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, NotOrganizer):
             msg = "🎅 Only the Secret Santa organizer can use that!"
+            log.info("Blocked %s from an organizer-only command", interaction.user)
         elif isinstance(error, app_commands.CommandOnCooldown):
             msg = f"⏳ Slow down! Try again in {error.retry_after:.0f}s."
         else:
