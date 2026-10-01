@@ -17,6 +17,8 @@ GOLD = discord.Color.from_rgb(212, 160, 23)
 BUTTONS = {
     "join":       ("santa:join",        "Join",                   "🎁", discord.ButtonStyle.success),
     "leave":      ("santa:leave",       "Leave",                  "👋", discord.ButtonStyle.secondary),
+    "leave_yes":  ("santa:leave_yes",   "Yes, leave",             "👋", discord.ButtonStyle.danger),
+    "leave_no":   ("santa:leave_no",    "Stay in",                "🎁", discord.ButtonStyle.success),
     "wishlist":   ("santa:wishlist",    "My wishlist",            "📝", discord.ButtonStyle.primary),
     "dates":      ("santa:dates",       "Pick dates",             "📅", discord.ButtonStyle.primary),
     "my_giftee":  ("santa:my_giftee",   "Who do I have?",         "🎅", discord.ButtonStyle.primary),

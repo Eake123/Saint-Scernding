@@ -132,17 +132,45 @@ async def join(interaction: discord.Interaction) -> None:
     await refresh_signup_panel(interaction.client)
 
 
-async def leave(interaction: discord.Interaction) -> None:
+async def _can_leave(interaction: discord.Interaction) -> bool:
     db = db_of(interaction)
     if not db.is_in(interaction.user.id):
         await reply(interaction, "You weren't signed up. 🙂")
-        return
+        return False
     if db.phase != "signup":
         await reply(interaction, "Names have already been drawn, so ask the organizer to take you out.")
+        return False
+    return True
+
+
+async def leave(interaction: discord.Interaction) -> None:
+    """Step 1: ask first — leaving wipes everything they've filled in."""
+    if not await _can_leave(interaction):
         return
-    db.remove_participant(interaction.user.id)
-    await reply(interaction, "You've left this year's Secret Santa. 👋 You can re-join any time before the draw.")
+    db = db_of(interaction)
+    uid = interaction.user.id
+    lose = [label for label, has in (
+        ("📝 your wishlist", db.has_wishlist(db.participant(uid))),
+        ("📅 your date votes", db.has_voted(uid)),
+        ("🕰️ your past-pairings history", bool(db.history_of(uid))),
+    ) if has]
+    warning = ("This deletes " + ", ".join(lose) + ", and re-joining won't bring them back."
+               if lose else "You can re-join any time before the draw.")
+    await reply(interaction, f"**Are you sure you want to leave Secret Santa?** 😢\n{warning}",
+                view=ui.buttons("leave_no", "leave_yes"))
+
+
+async def confirm_leave(interaction: discord.Interaction) -> None:
+    if not await _can_leave(interaction):
+        return
+    db_of(interaction).remove_participant(interaction.user.id)
+    await interaction.response.edit_message(
+        content="You've left this year's Secret Santa. 👋 You can re-join any time before the draw.", view=None)
     await refresh_signup_panel(interaction.client)
+
+
+async def cancel_leave(interaction: discord.Interaction) -> None:
+    await interaction.response.edit_message(content="Phew 😮‍💨 You're still in! 🎁", view=None)
 
 
 # ---------------------------------------------------------------- wishlist
@@ -305,6 +333,8 @@ async def mark_ready(interaction: discord.Interaction, note: str | None = None) 
 ROUTES = {
     "santa:join": join,
     "santa:leave": leave,
+    "santa:leave_yes": confirm_leave,
+    "santa:leave_no": cancel_leave,
     "santa:wishlist": open_wishlist,
     "santa:dates": open_date_picker,
     "santa:dates_pick": submit_dates,

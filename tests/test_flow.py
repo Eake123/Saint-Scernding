@@ -140,6 +140,27 @@ async def confirm(bot, inter):
 
 
 @pytest.mark.asyncio
+async def test_leave_needs_confirmation(tmp_path):
+    db = DB(tmp_path / "leave.db")
+    bot = FakeBot(db)
+    await actions.join(FakeInteraction(bot, 1))
+    db.save_wishlist(1, wish="socks")
+
+    ask = FakeInteraction(bot, 1)
+    await actions.leave(ask)
+    assert db.is_in(1)  # one click does nothing yet
+    assert "Are you sure" in ask.text() and "wishlist" in ask.text()
+    assert [b.custom_id for b in ask.response.items[-1].view.children] == ["santa:leave_no", "santa:leave_yes"]
+
+    await actions.cancel_leave(FakeInteraction(bot, 1))
+    assert db.is_in(1) and db.participant(1)["wish"] == "socks"
+
+    done = FakeInteraction(bot, 1)
+    await actions.confirm_leave(done)
+    assert not db.is_in(1) and "You've left" in done.text()
+
+
+@pytest.mark.asyncio
 async def test_full_season(tmp_path):
     db = DB(tmp_path / "flow.db")
     bot = FakeBot(db)
