@@ -87,23 +87,44 @@ def _fit_name(draw: ImageDraw.ImageDraw, name: str, max_w: int) -> tuple[list[st
 
 
 def render(name: str, budget: str, when: str | None = None, venue: str | None = None) -> Image.Image:
-    w, h = PAPER_SIZE
-    layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    d = ImageDraw.Draw(layer)
-
-    # Build the block first, then centre it vertically above the "Shhh" footer.
+    w = PAPER_SIZE[0]
+    measure = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
     items: list[tuple] = []  # ("text", str, font, fill, gap) | ("divider", gap)
     items.append(("text", "Ho ho ho!", _font("script", 44), RED_INK, 12))
     items.append(("text", "This year, you are", _font("serif", 20), INK, 5))
     items.append(("text", "the Secret Santa for", _font("serif", 20), INK, 14))
-    lines, name_font = _fit_name(d, clean_name(name), w - 44)
+    lines, name_font = _fit_name(measure, clean_name(name), w - 44)
     for i, l in enumerate(lines):
         items.append(("text", l, name_font, RED_INK, 4 if i < len(lines) - 1 else 6))
     items.append(("divider", 26))
     small = _font("serif", 19)
     details = [f"Budget: {budget}"] + ([f"Gift Night: {when}"] if when else []) + ([venue] if venue else [])
-    for i, t in enumerate(details):
+    for t in details:
         items.append(("text", t, small, INK, 7))
+    return _compose(items, "Shhh... keep it secret!")
+
+
+def render_notice(heading: list[str], big: str, details: list[str], footer: str) -> Image.Image:
+    """Saint Scernding holding up an announcement (e.g. a date change) instead of a giftee's name."""
+    w = PAPER_SIZE[0]
+    measure = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+    items: list[tuple] = [("text", "Ho ho ho!", _font("script", 44), RED_INK, 12)]
+    for i, t in enumerate(heading):
+        items.append(("text", t, _font("serif", 20), INK, 5 if i < len(heading) - 1 else 14))
+    lines, big_font = _fit_name(measure, big, w - 44)
+    for i, l in enumerate(lines):
+        items.append(("text", l, big_font, RED_INK, 4 if i < len(lines) - 1 else 6))
+    items.append(("divider", 26))
+    for t in details:
+        items.append(("text", t, _font("serif", 19), INK, 7))
+    return _compose(items, footer)
+
+
+def _compose(items: list[tuple], footer: str) -> Image.Image:
+    """Lay the items out centred on the paper (above the footer), tilt, and paste onto the photo."""
+    w, h = PAPER_SIZE
+    layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
 
     def height(item):
         if item[0] == "divider":
@@ -124,9 +145,8 @@ def render(name: str, budget: str, when: str | None = None, venue: str | None = 
             d.text(((w - d.textlength(text, font=font)) / 2, y - font.getbbox(text)[1]), text, font=font, fill=fill)
         y += height(item)
 
-    secret = _font("script", 27)
-    text = "Shhh... keep it secret!"
-    d.text(((w - d.textlength(text, font=secret)) / 2, h - 44), text, font=secret, fill=RED_INK)
+    script = _font("script", 27)
+    d.text(((w - d.textlength(footer, font=script)) / 2, h - 44), footer, font=script, fill=RED_INK)
 
     # a touch of transparency so it reads as ink on paper, then tilt to match the paper
     alpha = layer.getchannel("A").point(lambda a: int(a * 0.92))
