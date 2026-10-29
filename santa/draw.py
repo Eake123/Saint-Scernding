@@ -20,15 +20,24 @@ class _OutOfBudget(Exception):
     pass
 
 
-def make_allowed(forbidden: set[tuple[int, int]], pools: dict[int, set[int]]) -> Allowed:
+def make_allowed(
+    forbidden: set[tuple[int, int]],
+    pools: dict[int, set[int]],
+    targets: dict[int, set[int]] | None = None,
+) -> Allowed:
     """forbidden: (santa, giftee) pairs that must not happen.
-    pools: giftee -> the only people allowed to be their santa (organizer's blind suggestions)."""
+    pools: giftee -> the only people allowed to be their santa (organizer's blind suggestions).
+    targets: santa -> the only people they're allowed to give to (the other direction)."""
+    targets = targets or {}
 
     def allowed(santa: int, giftee: int) -> bool:
         if santa == giftee or (santa, giftee) in forbidden:
             return False
         pool = pools.get(giftee)
-        return not pool or santa in pool
+        if pool and santa not in pool:
+            return False
+        target = targets.get(santa)
+        return not target or giftee in target
 
     return allowed
 

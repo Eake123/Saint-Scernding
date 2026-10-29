@@ -27,6 +27,16 @@ def test_rules_feed_into_draw(tmp_path):
         assert next(s for s, g in m.items() if g == 7) in (8, 9)
 
 
+def test_target_pools(tmp_path):
+    db = make_db(tmp_path)
+    db.set_target_pool(1, [2, 3])
+    db.set_target_pool(1, [4, 5])  # replaces
+    assert db.target_pools() == {1: {4, 5}}
+    db.remove_participant(4)
+    assert db.target_pools() == {1: {5}}
+    assert db.clear_target_pool(1) and db.target_pools() == {}
+
+
 def test_history_replaces(tmp_path):
     db = make_db(tmp_path)
     db.set_history(1, [2], [3])

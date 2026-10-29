@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS history (
 -- organizer rules
 CREATE TABLE IF NOT EXISTS exclusions (a INTEGER, b INTEGER, PRIMARY KEY (a, b));
 CREATE TABLE IF NOT EXISTS santa_pool (giftee_id INTEGER, santa_id INTEGER, PRIMARY KEY (giftee_id, santa_id));
+-- the other direction: santa_id may only GIVE to one of these giftees
+CREATE TABLE IF NOT EXISTS giftee_pool (santa_id INTEGER, giftee_id INTEGER, PRIMARY KEY (santa_id, giftee_id));
 
 CREATE TABLE IF NOT EXISTS assignments (
     santa_id  INTEGER PRIMARY KEY,
@@ -139,6 +141,7 @@ class DB:
             "DELETE FROM date_voters WHERE user_id = ?",
             "DELETE FROM history WHERE reporter_id = ?",
             "DELETE FROM santa_pool WHERE giftee_id = ? OR santa_id = ?",
+            "DELETE FROM giftee_pool WHERE santa_id = ? OR giftee_id = ?",
             "DELETE FROM guesses WHERE user_id = ?",
         ):
             self.conn.execute(sql, (uid,) * sql.count("?"))
@@ -197,9 +200,25 @@ class DB:
         return self.run("DELETE FROM santa_pool WHERE giftee_id = ?", (giftee,)).rowcount > 0
 
     def pools(self) -> dict[int, set[int]]:
+        """giftee -> the only people allowed to be their santa."""
         pools: dict[int, set[int]] = {}
         for giftee, santa in self.q("SELECT giftee_id, santa_id FROM santa_pool"):
             pools.setdefault(giftee, set()).add(santa)
+        return pools
+
+    def set_target_pool(self, santa: int, giftees: list[int]) -> None:
+        self.conn.execute("DELETE FROM giftee_pool WHERE santa_id = ?", (santa,))
+        self.conn.executemany("INSERT INTO giftee_pool VALUES (?, ?)", [(santa, g) for g in giftees])
+        self.conn.commit()
+
+    def clear_target_pool(self, santa: int) -> bool:
+        return self.run("DELETE FROM giftee_pool WHERE santa_id = ?", (santa,)).rowcount > 0
+
+    def target_pools(self) -> dict[int, set[int]]:
+        """santa -> the only people they're allowed to give to."""
+        pools: dict[int, set[int]] = {}
+        for santa, giftee in self.q("SELECT santa_id, giftee_id FROM giftee_pool"):
+            pools.setdefault(santa, set()).add(giftee)
         return pools
 
     def forbidden_pairs(self) -> set[tuple[int, int]]:
@@ -269,7 +288,7 @@ class DB:
     def new_season(self) -> None:
         """Clear this year's data. Keeps exclusions (couples etc.) and the archive (so repeats stay blocked)."""
         for table in ("participants", "date_options", "date_votes", "date_voters", "history",
-                      "santa_pool", "assignments", "guesses", "reminders"):
+                      "santa_pool", "giftee_pool", "assignments", "guesses", "reminders"):
             self.conn.execute(f"DELETE FROM {table}")
         keep = ("budget", "event_name", "venue", "channel_id", "countdown")
         self.conn.execute(

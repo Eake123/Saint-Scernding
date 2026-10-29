@@ -204,9 +204,18 @@ async def test_full_season(tmp_path):
     # rules
     await call(part.history, part, FakeInteraction(bot, 1), i_had=user(2), had_me=user(3))
     await call(admin.exclude, admin, FakeInteraction(bot, ORG), user(4), user(5))
-    db.set_pool(6, [7, ORG])
+    # two-way group via the real command + user picker (default direction = both)
+    r = await call(admin.suggest, admin, FakeInteraction(bot, ORG), user(6))
+    picker = next(i.view for i in r.response.items if getattr(i, "view", None)).children[0]
+    picker._values = [user(7), user(ORG), user(2)]
+    done = FakeInteraction(bot, ORG)
+    await picker.callback(done)
+    assert "both their Santa **and**" in done.text()
+    assert db.pools()[6] == db.target_pools()[6] == {7, ORG, 2}
     r = await call(admin.check_draw, admin, FakeInteraction(bot, ORG))
     assert "valid draw" in r.text()
+    r = await call(admin.rules, admin, FakeInteraction(bot, ORG))
+    assert "gets & is gotten by" in r.text()
 
     # the draw
     r = await call(admin.draw_names, admin, FakeInteraction(bot, ORG))
@@ -214,7 +223,7 @@ async def test_full_season(tmp_path):
     assert "All done" in click.text()
     m = db.assignment_map()
     assert m[1] != 2 and m[3] != 1 and m[4] != 5 and m[5] != 4
-    assert db.santa_of(6) in (7, ORG)
+    assert db.santa_of(6) in (7, ORG, 2) and db.giftee_of(6) in (7, ORG, 2)
     for uid in people:
         assert "You're the Secret Santa for" in bot.dm_text(uid)
     # the organizer's own replies never contain the pairings

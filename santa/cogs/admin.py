@@ -85,12 +85,12 @@ class Admin(commands.GroupCog, group_name="santa-admin", group_description="Orga
 
     def allowed(self):
         people = {p["user_id"] for p in self.db.participants()}
-        pools = {}
-        for giftee, santas in self.db.pools().items():
-            santas &= people
-            if giftee in people and santas:
-                pools[giftee] = santas
-        return make_allowed(self.db.forbidden_pairs(), pools)
+
+        def active(raw: dict[int, set[int]]) -> dict[int, set[int]]:
+            # ignore people who've left; a pool with nobody left in it no longer restricts anything
+            return {k: v & people for k, v in raw.items() if k in people and v & people}
+
+        return make_allowed(self.db.forbidden_pairs(), active(self.db.pools()), active(self.db.target_pools()))
 
     def names(self, ids) -> str:
         return ", ".join(f"**{self.db.name(i)}**" for i in ids) or "nobody"
@@ -363,49 +363,75 @@ class Admin(commands.GroupCog, group_name="santa-admin", group_description="Orga
         ok = self.db.remove_exclusion(person1.id, person2.id)
         await reply(interaction, "✅ Removed." if ok else "Those two weren't excluded.")
 
-    @app_commands.command(name="suggest", description="Blindly choose a few people who know someone — one of them will get them")
-    @app_commands.describe(giftee="The person who needs a Santa that knows them")
-    async def suggest(self, interaction: discord.Interaction, giftee: discord.User):
+    @app_commands.command(name="suggest", description="Blindly limit someone to a group of people they know (who gets them / who they get)")
+    @app_commands.describe(
+        person="The person who should only be paired with people they know",
+        direction="Both ways (default), only who gets them, or only who they get",
+    )
+    @app_commands.choices(direction=[
+        app_commands.Choice(name="both ways: who gets them AND who they get", value="both"),
+        app_commands.Choice(name="only who gets them (their Santa)", value="santa"),
+        app_commands.Choice(name="only who they get (their giftee)", value="giftee"),
+    ])
+    async def suggest(self, interaction: discord.Interaction, person: discord.User,
+                      direction: app_commands.Choice[str] | None = None):
         db = self.db
+        way = direction.value if direction else "both"
         if db.phase != "signup":
             await reply(interaction, "Names are already drawn, so suggestions are locked.")
             return
-        if not db.is_in(giftee.id):
-            await reply(interaction, f"{giftee.display_name} hasn't joined yet.")
+        if not db.is_in(person.id):
+            await reply(interaction, f"{person.display_name} hasn't joined yet.")
             return
-        current = db.pools().get(giftee.id)
-        select = discord.ui.UserSelect(placeholder=f"Who knows {giftee.display_name} well?", min_values=1, max_values=10)
+        current = (db.pools().get(person.id, set()) | db.target_pools().get(person.id, set()))
+        select = discord.ui.UserSelect(placeholder=f"Who knows {person.display_name} well?", min_values=1, max_values=10)
 
         async def picked(inter: discord.Interaction):
-            chosen = [u for u in select.values if u.id != giftee.id and db.is_in(u.id)]
+            chosen = [u for u in select.values if u.id != person.id and db.is_in(u.id)]
             skipped = [u.display_name for u in select.values if u not in chosen]
             if not chosen:
                 await inter.response.edit_message(content="None of those people are signed up. Try again.", view=None)
                 return
-            db.set_pool(giftee.id, [u.id for u in chosen])
-            msg = (f"🤫 Done! **{giftee.display_name}**'s Santa will be secretly picked from: "
-                   f"{', '.join(f'**{u.display_name}**' for u in chosen)}.\nYou won't find out which one.")
+            ids = [u.id for u in chosen]
+            if way in ("both", "santa"):
+                db.set_pool(person.id, ids)
+            else:
+                db.clear_pool(person.id)
+            if way in ("both", "giftee"):
+                db.set_target_pool(person.id, ids)
+            else:
+                db.clear_target_pool(person.id)
+            group = ", ".join(f"**{u.display_name}**" for u in chosen)
+            what = {"both": "both their Santa **and** the person they gift to",
+                    "santa": "their Santa", "giftee": "the person they gift to"}[way]
+            msg = (f"🤫 Done! For **{person.display_name}**, {what} will be secretly picked from: {group}.\n"
+                   "You won't find out who.")
             if len(chosen) == 1:
-                msg += "\n\n⚠️ With only one person it's not blind — you'll know who has them."
+                msg += "\n\n⚠️ With only one person it's not blind — you'll know exactly who it is."
+                if way == "both":
+                    msg += " They'd also have to swap gifts with each other (A gets B *and* B gets A)."
             if any(u.id == config.ORGANIZER_ID for u in chosen):
-                msg += "\n\n⚠️ You put yourself in the pool — if you don't get them, you'll know it's one of the others."
+                msg += "\n\n⚠️ You put yourself in the group — so you'll know a little about where they landed."
             if skipped:
                 msg += f"\n\n(Skipped, not signed up: {', '.join(skipped)})"
+            msg += "\n\nRun `/santa-admin check-draw` to make sure all the rules can still fit together."
             await inter.response.edit_message(content=msg, view=None)
 
         select.callback = picked
         view = discord.ui.View(timeout=300)
         view.add_item(select)
-        intro = (f"Pick **2 or more** people who know **{giftee.display_name}**. "
-                 "When names are drawn, one of them is chosen at random — nobody (including you) will know who.")
+        what = {"both": "both their Santa **and** who they gift to", "santa": "their Santa",
+                "giftee": "who they gift to"}[way]
+        intro = (f"Pick the people **{person.display_name}** knows (3+ is best). At the draw, {what} "
+                 "will be chosen at random from this group — nobody (including you) will know who.")
         if current:
-            intro += f"\n\nCurrent pool: {self.names(current)} (picking again replaces it)"
+            intro += f"\n\nCurrent group: {self.names(current)} (picking again replaces it)"
         await reply(interaction, intro, view=view)
 
-    @app_commands.command(name="unsuggest", description="Remove a suggestion pool so anyone can get this person")
-    async def unsuggest(self, interaction: discord.Interaction, giftee: discord.User):
-        ok = self.db.clear_pool(giftee.id)
-        await reply(interaction, "✅ Removed — anyone can get them now." if ok else "They didn't have a pool.")
+    @app_commands.command(name="unsuggest", description="Remove someone's suggestion group(s) so they can be paired with anyone")
+    async def unsuggest(self, interaction: discord.Interaction, person: discord.User):
+        ok = self.db.clear_pool(person.id) | self.db.clear_target_pool(person.id)
+        await reply(interaction, "✅ Removed — they can be paired with anyone now." if ok else "They didn't have a group.")
 
     @app_commands.command(name="rules", description="See exclusions, suggestion pools and history on file")
     async def rules(self, interaction: discord.Interaction):
@@ -414,10 +440,17 @@ class Admin(commands.GroupCog, group_name="santa-admin", group_description="Orga
         ex = db.exclusions()
         e.add_field(name=f"🚫 Exclusions ({len(ex)})",
                     value="\n".join(f"{db.name(a)} ↔ {db.name(b)}" for a, b in ex)[:1024] or "none", inline=False)
-        pools = db.pools()
-        e.add_field(name=f"🤫 Suggestion pools ({len(pools)})",
-                    value="\n".join(f"{db.name(g)} ← one of {', '.join(db.name(s) for s in ss)}"
-                                    for g, ss in pools.items())[:1024] or "none", inline=False)
+        pools, targets = db.pools(), db.target_pools()
+        lines = []
+        for p in sorted(set(pools) | set(targets), key=lambda u: db.name(u).lower()):
+            if pools.get(p) == targets.get(p):
+                lines.append(f"{db.name(p)} ⇄ gets & is gotten by one of {', '.join(db.name(s) for s in pools[p])}")
+            else:
+                if p in pools:
+                    lines.append(f"{db.name(p)} ← gotten by one of {', '.join(db.name(s) for s in pools[p])}")
+                if p in targets:
+                    lines.append(f"{db.name(p)} → gets one of {', '.join(db.name(s) for s in targets[p])}")
+        e.add_field(name=f"🤫 Suggestion groups ({len(lines)})", value="\n".join(lines)[:1024] or "none", inline=False)
         reporters = db.q("SELECT COUNT(DISTINCT reporter_id), COUNT(*) FROM history")[0]
         years = db.q("SELECT COUNT(DISTINCT year) FROM archive")[0][0]
         e.add_field(name="🕰️ Past pairings blocked",

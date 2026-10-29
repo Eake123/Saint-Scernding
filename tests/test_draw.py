@@ -40,6 +40,30 @@ def test_rules_are_respected(seed):
         assert santa in pool
 
 
+@pytest.mark.parametrize("seed", range(50))
+def test_two_way_groups(seed):
+    # 1 and 2 only know people in {3, 4, 5}: both their Santa and their giftee must come from there
+    people = list(range(1, 16))
+    group = {3, 4, 5}
+    allowed = make_allowed(set(), {1: group, 2: group}, {1: group, 2: group})
+    result = draw(people, allowed, rng=random.Random(seed))
+    check_valid(result, people, allowed)
+    for p in (1, 2):
+        assert result[p] in group  # who they get
+        assert next(s for s, g in result.items() if g == p) in group  # who gets them
+
+
+def test_two_way_group_choice_is_random():
+    people = list(range(1, 11))
+    allowed = make_allowed(set(), {1: {2, 3, 4}}, {1: {2, 3, 4}})
+    gives, gets = set(), set()
+    for seed in range(200):
+        result = draw(people, allowed, rng=random.Random(seed))
+        gives.add(result[1])
+        gets.add(next(s for s, g in result.items() if g == 1))
+    assert gives == {2, 3, 4} and gets == {2, 3, 4}
+
+
 def test_pool_choice_is_random():
     people = list(range(1, 11))
     allowed = make_allowed(set(), {1: {2, 3, 4}})
