@@ -1,13 +1,31 @@
 """Things participants can do. Slash commands and buttons both call into here."""
 from __future__ import annotations
 
+import asyncio
 import logging
 
 import discord
 
-from . import config, ui
+from . import config, letter, ui
 
 log = logging.getLogger("santa")
+
+
+async def giftee_message(db, santa_id: int, title: str | None = None) -> dict:
+    """send()/reply() kwargs for "here's who you got": the embed plus Saint Scernding's letter with
+    the giftee's name written on it. If the picture can't be made, the embed still goes out alone."""
+    e = ui.giftee_embed(db, santa_id, title) if title else ui.giftee_embed(db, santa_id)
+    kwargs = {"embed": e}
+    if letter.available():
+        try:
+            giftee = db.participant(db.giftee_of(santa_id))
+            when = ui.fmt_day(db.get("event_date")) if db.get("event_date") else None
+            buf = await asyncio.to_thread(letter.render_jpeg, giftee["name"], ui.budget_text(db), when, db.get("venue"))
+            kwargs["file"] = discord.File(buf, filename="santa-letter.jpg")
+            e.set_image(url="attachment://santa-letter.jpg")
+        except Exception:
+            log.exception("Couldn't draw the Santa letter; sending the DM without it")
+    return kwargs
 
 
 def db_of(interaction: discord.Interaction):
@@ -256,8 +274,9 @@ async def submit_dates(interaction: discord.Interaction) -> None:
 # ---------------------------------------------------------------- after the draw
 async def show_my_giftee(interaction: discord.Interaction) -> None:
     if await require_drawn(interaction):
-        await reply(interaction, embed=ui.giftee_embed(db_of(interaction), interaction.user.id),
-                    view=ui.buttons("msg_giftee", "ready"))
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        msg = await giftee_message(db_of(interaction), interaction.user.id, "🎅 Your Secret Santa mission 🤫")
+        await reply(interaction, view=ui.buttons("msg_giftee", "ready"), **msg)
 
 
 class MessageModal(discord.ui.Modal):

@@ -88,13 +88,18 @@ def where_and_when(db) -> str:
     return " ".join(parts) or "on gift night"
 
 
-def giftee_embed(db, santa_id: int) -> discord.Embed:
+def giftee_embed(db, santa_id: int, title: str = "🎅🎲 THE NAMES HAVE BEEN DRAWN 🎲🎅") -> discord.Embed:
     giftee = db.participant(db.giftee_of(santa_id))
-    e = embed(f"🎅 You're the Secret Santa for… {giftee['name']}!", color=GREEN)
+    name = discord.utils.escape_markdown(giftee["name"])
+    e = embed(title, color=GREEN)
     e.description = (
-        "\n".join(event_lines(db))
-        + f"\n\nBring your wrapped gift {where_and_when(db)}. "
-        "Keep it secret! 🤫 Use the buttons below to message them anonymously."
+        "Saint Scernding has consulted the sacred scrolls 📜🔮 and your giftee is…\n"
+        f"# 🎁 {name} 🎁\n"
+        + "\n".join(event_lines(db))
+        + f"\n\n🎄 Bring your wrapped gift {where_and_when(db)}.\n"
+        "🤫 Tell **NO ONE**. Not the group chat. Not your mom. Not your dog. 🐕🚫\n"
+        "💌 Use the buttons below to message them **anonymously**.\n"
+        "💡 Stuck? Try `/gift-ideas`. Got it? Hit **I've got my gift** 🎁✅"
     )
     return add_wishlist_fields(e, giftee)
 

@@ -252,7 +252,8 @@ class Admin(commands.GroupCog, group_name="santa-admin", group_description="Orga
             note = ("The organizer added you after names were drawn."
                     if santa == person.id else "Someone joined late, so your giftee has changed. Sorry for the switcheroo!")
             await send_dm(self.bot, santa, embed=ui.embed(title, note, ui.GOLD))
-            await send_dm(self.bot, santa, embed=ui.giftee_embed(db, santa), view=ui.buttons(*ui.SECRET_BUTTONS))
+            msg = await actions.giftee_message(db, santa, None if santa == person.id else "🔄 Your NEW Secret Santa mission 🎅")
+            await send_dm(self.bot, santa, view=ui.buttons(*ui.SECRET_BUTTONS), **msg)
         others = len(changed) - 1
         await reply(interaction, f"✅ Added **{person.display_name}** and quietly slotted them into the draw. "
                                  f"{others} other {'person' if others == 1 else 'people'} got a new giftee "
@@ -282,7 +283,8 @@ class Admin(commands.GroupCog, group_name="santa-admin", group_description="Orga
                 await send_dm(self.bot, santa, embed=ui.embed(
                     "🔄 Change of plans!", "Someone had to drop out, so you have a new giftee. "
                     "If you already bought something, message the organizer.", ui.GOLD))
-                await send_dm(self.bot, santa, embed=ui.giftee_embed(db, santa), view=ui.buttons(*ui.SECRET_BUTTONS))
+                msg = await actions.giftee_message(db, santa, "🔄 Your NEW Secret Santa mission 🎅")
+                await send_dm(self.bot, santa, view=ui.buttons(*ui.SECRET_BUTTONS), **msg)
             await reply(inter, f"✅ Removed **{person.display_name}** and patched up the draw. "
                                f"{len(changed)} {'person has' if len(changed) == 1 else 'people have'} a new giftee "
                                "(I didn't tell you who) 🤫")
@@ -502,8 +504,8 @@ class Admin(commands.GroupCog, group_name="santa-admin", group_description="Orga
             await reply(inter, f"🎲 Names drawn! Sending {count} DMs… (this takes a moment)")
             failed = []
             for santa in mapping:
-                ok = await send_dm(self.bot, santa, embed=ui.giftee_embed(db, santa),
-                                   view=ui.buttons(*ui.SECRET_BUTTONS))
+                ok = await send_dm(self.bot, santa, view=ui.buttons(*ui.SECRET_BUTTONS),
+                                   **await actions.giftee_message(db, santa))
                 if not ok:
                     failed.append(santa)
             channel = await self.channel(inter)

@@ -225,7 +225,10 @@ async def test_full_season(tmp_path):
     assert m[1] != 2 and m[3] != 1 and m[4] != 5 and m[5] != 4
     assert db.santa_of(6) in (7, ORG, 2) and db.giftee_of(6) in (7, ORG, 2)
     for uid in people:
-        assert "You're the Secret Santa for" in bot.dm_text(uid)
+        assert "your giftee is" in bot.dm_text(uid)
+        drawn_dm = next(i for i in bot.dms[uid].items if getattr(i, "embed", None) and "DRAWN" in i.embed.title)
+        assert drawn_dm.file.filename == "santa-letter.jpg"
+        assert drawn_dm.embed.image.url == "attachment://santa-letter.jpg"
     # the organizer's own replies never contain the pairings
     assert "→" not in click.text()
 
