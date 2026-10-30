@@ -1,4 +1,4 @@
-"""Background jobs: scheduled reminders, the daily countdown, and automatic "got your gift?" nudges."""
+"""Background jobs: scheduled reminders, the countdown (30/15/5 days out + the day of), and "got your gift?" nudges."""
 from __future__ import annotations
 
 import logging
@@ -12,6 +12,9 @@ from .. import config, runtime, ui
 from ..actions import send_dm
 
 log = logging.getLogger("santa")
+
+# days before gift night that get a countdown post (0 = the day itself)
+COUNTDOWN_DAYS = (30, 15, 5, 0)
 
 
 class Scheduler(commands.Cog):
@@ -70,9 +73,9 @@ class Scheduler(commands.Cog):
         days = (date.fromisoformat(event) - today).days
         venue = db.get("venue")
 
-        # Countdown post
+        # Countdown post — only on milestone days, not every day
         channel = self.channel()
-        if db.get("countdown") == "1" and channel and days >= 0:
+        if db.get("countdown") == "1" and channel and days in COUNTDOWN_DAYS:
             if days == 0:
                 head = "🎉 **IT'S GIFT NIGHT!** 🎉"
                 body = f"Don't forget your gift! See you{f' at **{venue}**' if venue else ''} 🍻"

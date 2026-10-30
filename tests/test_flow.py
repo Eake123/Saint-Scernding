@@ -240,8 +240,9 @@ async def test_full_season(tmp_path):
     assert "green!" in bot.dm_text(santa_of_1)
 
     # gift ready + guess + status
+    dms_before = len(bot.dms[1].items)
     await actions.mark_ready(FakeInteraction(bot, santa_of_1))
-    assert "has your gift" in bot.dm_text(1)
+    assert len(bot.dms[1].items) == dms_before  # giftee is NOT told (it would hint at who their Santa is)
     await call(secret.guess, secret, FakeInteraction(bot, 1), user(santa_of_1))
     r = await call(admin.status, admin, FakeInteraction(bot, ORG))
     assert f"1/{len(people)}" in r.text()
@@ -253,15 +254,25 @@ async def test_full_season(tmp_path):
     await call(admin.add, admin, FakeInteraction(bot, ORG), user(50))
     assert db.giftee_of(50) is not None and len(db.assignment_map()) == len(people)
 
-    # scheduler: 3 days out nudges only people without a gift
+    # scheduler: countdown posts only 30/15/5 days out + the day of
     sched = Scheduler.__new__(Scheduler)
     sched.bot, sched.db = bot, db
+    countdowns = lambda: [i.embed.title for i in bot.channel.items
+                          if getattr(i, "embed", None) and ("until gift night" in (i.embed.title or "")
+                                                            or "IT'S GIFT NIGHT" in (i.embed.title or ""))]
+    for days_out in (6, 5, 4):
+        await sched.daily(gift_night - timedelta(days=days_out))
+    assert len(countdowns()) == 1 and "5 days" in countdowns()[0]
+
+    # 3 days out: no countdown post, but DMs to people without a gift
     await sched.daily(gift_night - timedelta(days=3))
-    assert "3 days" in bot.channel.text()
+    assert len(countdowns()) == 1
     # (a santa whose giftee changed in the remove/add above is correctly back to "not ready")
     for santa in db.assignment_map():
         nudged = "Gift night is coming up" in bot.dm_text(santa)
         assert nudged == (not db.assignment(santa)["ready_at"])
+    await sched.daily(gift_night)
+    assert len(countdowns()) == 2 and "IT'S GIFT NIGHT" in countdowns()[-1]
 
     # wrap-up after gift night
     r = await call(admin.wrap_up, admin, FakeInteraction(bot, ORG))

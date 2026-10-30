@@ -30,7 +30,7 @@ never decides the order.
   **The organizer can play too.** No command ever shows who has whom.
 - 🔄 **Late joiners & dropouts after the draw**: the fewest possible people get a new giftee
 - 📊 **Gift tracker & nudges**: see who has their gift ready and DM reminders to the rest
-- ⏰ **Scheduled announcements**, a **daily countdown**, and **automatic "got your gift?" DMs** 3 days and 1 day out
+- ⏰ **Scheduled announcements**, a **countdown** 30, 15 and 5 days out and on the day, and **automatic "got your gift?" DMs** 3 days and 1 day out
 - 🏆 **Wrap-up**: after gift night, post a who-had-who recap + guess results and save the year so those pairings
   never repeat
 

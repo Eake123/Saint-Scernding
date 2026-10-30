@@ -332,7 +332,9 @@ async def relay_message(interaction: discord.Interaction, to: str, text: str) ->
                                  "I've let the organizer know so they can nudge them (without saying who you are).")
 
 
-async def mark_ready(interaction: discord.Interaction, note: str | None = None) -> None:
+async def mark_ready(interaction: discord.Interaction) -> None:
+    """Private bookkeeping only. The giftee is deliberately NOT told: a "your gift is ready" DM arriving
+    right after someone says "just bought my gift" in chat would give the Santa away."""
     if not await require_drawn(interaction):
         return
     db = db_of(interaction)
@@ -341,12 +343,8 @@ async def mark_ready(interaction: discord.Interaction, note: str | None = None) 
         await reply(interaction, "🎁 You're already marked as ready. See you there!")
         return
     db.mark_ready(uid)
-    await reply(interaction, f"🎁 Nice work, Santa! Don't forget to bring it {ui.where_and_when(db)}. 🎅")
-    e = ui.embed("🎁 Your Secret Santa has your gift!",
-                 f"It's bought and waiting for you. See you {ui.where_and_when(db)}! 👀", ui.GREEN)
-    if note:
-        e.add_field(name="Note from your Santa", value=note[:1000])
-    await send_dm(interaction.client, db.giftee_of(uid), embed=e, view=ui.buttons("msg_santa"))
+    await reply(interaction, f"🎁 Nice work, Santa! Don't forget to bring it {ui.where_and_when(db)}. 🎅\n"
+                             "(Only you and the reminder system know — your giftee isn't told 🤫)")
 
 
 ROUTES = {

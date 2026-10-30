@@ -36,7 +36,7 @@ def intro_embeds(db) -> list[discord.Embed]:
         "6️⃣ `/message-giftee` 💌 message your giftee **100% ANONYMOUSLY** 🕵️‍♂️👀 and "
         "`/message-santa` 🎅📨 to talk to whoever has YOU (reply buttons!!! 🔁💬)\n"
         "7️⃣ `/gift-ideas` 💡🧠 brain empty? the robot's got you 🤖✨\n"
-        "8️⃣ `/gift-ready` 🎁✅ when you've got it, and your giftee gets a lil teaser 😏🔥\n"
+        "8️⃣ `/gift-ready` 🎁✅ when you've got it, and I'll stop bugging you about it 😌🔕\n"
         "9️⃣ `/guess` 🕵️ who has you?? 🤔 locks on gift night 🔒 get it right = ETERNAL bragging rights 👑🏆\n"
         f"🔟 🍻 **GIFT NIGHT** 🍻 bring your wrapped gift to **{venue}** 🎁🎁🎁 and FIND OUT 😳💥\n\n"
         "Lost?? 😵‍💫 `/santa` shows your personal checklist anytime ✅✅✅",

@@ -42,10 +42,9 @@ class Secret(commands.Cog):
     async def message_santa(self, interaction: discord.Interaction, message: str):
         await actions.relay_message(interaction, "santa", message)
 
-    @app_commands.command(name="gift-ready", description="Tell me you've got your gift 🎁 (your giftee gets a teaser)")
-    @app_commands.describe(note="Optional teaser for your giftee, e.g. 'it's heavy'")
-    async def gift_ready(self, interaction: discord.Interaction, note: str | None = None):
-        await actions.mark_ready(interaction, note)
+    @app_commands.command(name="gift-ready", description="Tell me you've got your gift 🎁 (stops the reminders; your giftee isn't told)")
+    async def gift_ready(self, interaction: discord.Interaction):
+        await actions.mark_ready(interaction)
 
     @app_commands.command(name="guess", description="Guess who your Secret Santa is! Locks on gift night 🕵️")
     @app_commands.describe(person="Who you think has you")

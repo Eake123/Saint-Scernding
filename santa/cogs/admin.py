@@ -114,7 +114,7 @@ class Admin(commands.GroupCog, group_name="santa-admin", group_description="Orga
         event_date="The night everyone meets up to hand over gifts, e.g. Dec 19",
         venue="Where you're meeting, e.g. a bar or someone's place",
         event_name="e.g. 'Secret Santa 2026'",
-        countdown="Post a daily countdown to gift night",
+        countdown="Post a countdown 30, 15 and 5 days before gift night, and on the day",
     )
     async def setup(self, interaction: discord.Interaction, channel: discord.TextChannel | None = None,
                     budget: app_commands.Range[int, 1, 10000] | None = None, event_date: str | None = None,
@@ -147,7 +147,7 @@ class Admin(commands.GroupCog, group_name="santa-admin", group_description="Orga
             f"**Budget:** {ui.budget_text(db)}",
             f"**Gift night:** {ui.fmt_day(db.get('event_date'))}",
             f"**Venue:** {db.get('venue') or 'not set'}",
-            f"**Daily countdown:** {'on' if db.get('countdown') == '1' else 'off'} "
+            f"**Countdown (30/15/5 days + day of):** {'on' if db.get('countdown') == '1' else 'off'} "
             f"(posts at {config.DAILY_POST_HOUR}:00, {config.TIMEZONE.key})",
             f"**Phase:** {db.phase} · sign-ups {'open' if db.get('signup_open') == '1' else 'closed'}",
         ])
