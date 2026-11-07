@@ -1,6 +1,7 @@
 """Is Saint Scernding healthy? Prints a short report; exit code 0 = healthy, 1 = something's wrong.
 
-    .venv\\Scripts\\python healthcheck.py [--hours 24]
+    .venv\\Scripts\\python healthcheck.py [--hours 24]   on the PC: processes, heartbeat, restarts, errors
+    python healthcheck.py --container                Docker HEALTHCHECK: fresh heartbeat + connected only
 """
 import argparse
 import re
@@ -30,10 +31,42 @@ def recent_lines(name: str, since: datetime) -> list[str]:
     return lines
 
 
+# The heartbeat is written every runtime.HEARTBEAT_INTERVAL (60s). Three missed beats = stuck.
+CONTAINER_MAX_AGE = 3 * runtime.HEARTBEAT_INTERVAL
+
+
+def container_check(max_age: float = CONTAINER_MAX_AGE) -> int:
+    """For Docker: healthy only if the bot wrote a heartbeat recently and is connected to Discord.
+    No process locks or log scans: Docker supervises the process and keeps the logs."""
+    hb = runtime.read_heartbeat()
+    if not hb:
+        print("UNHEALTHY: no heartbeat yet")
+        return 1
+    try:
+        age = (datetime.now(timezone.utc) - datetime.fromisoformat(hb["time"])).total_seconds()
+    except (KeyError, TypeError, ValueError):
+        print("UNHEALTHY: heartbeat file is unreadable")
+        return 1
+    detail = (f"heartbeat {age:.0f}s ago | connected={hb.get('connected')} | in server={hb.get('guild')} | "
+              f"phase={hb.get('phase')} | participants={hb.get('participants')} | version={hb.get('ref', '?')}")
+    if age > max_age:
+        print(f"UNHEALTHY: heartbeat is stale | {detail}")
+        return 1
+    if hb.get("connected") is not True:
+        print(f"UNHEALTHY: {'starting up' if hb.get('starting') else 'not connected to Discord'} | {detail}")
+        return 1
+    print(f"HEALTHY | {detail}")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--hours", type=float, default=24, help="how far back to look in the logs")
+    parser.add_argument("--container", action="store_true",
+                        help="Docker health check: only a fresh heartbeat and a Discord connection count")
     args = parser.parse_args()
+    if args.container:
+        return container_check()
     since = datetime.now() - timedelta(hours=args.hours)
     problems, report = [], []
 

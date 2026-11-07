@@ -1,6 +1,8 @@
 """Secret Santa bot. Run with start.bat (or: .venv\\Scripts\\python bot.py).
 For always-on use, run install_autostart.ps1 once instead — it keeps the bot running via supervisor.py."""
 import logging
+import os
+import signal
 import sys
 
 import anthropic
@@ -19,6 +21,7 @@ log = logging.getLogger("santa")
 class SantaBot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix=commands.when_mentioned, intents=discord.Intents.default())
+        self.gateway_up = False  # is_ready() stays True while discord.py reconnects; this doesn't
         self.db = DB(config.DB_PATH)
         self.claude = anthropic.AsyncAnthropic(api_key=config.ANTHROPIC_API_KEY) if config.ANTHROPIC_API_KEY else None
         self.tree.on_error = self.on_app_command_error
@@ -31,7 +34,17 @@ class SantaBot(commands.Bot):
         synced = await self.tree.sync(guild=guild)
         log.info("Synced %d slash commands to your server", len(synced))
 
+    async def on_connect(self):
+        self.gateway_up = True
+
+    async def on_resumed(self):
+        self.gateway_up = True
+
+    async def on_disconnect(self):
+        self.gateway_up = False
+
     async def on_ready(self):
+        self.gateway_up = True
         log.info("🎅 Logged in as %s — ready!", self.user)
         if not self.get_guild(config.GUILD_ID):
             log.warning("I'm not in the server with GUILD_ID=%s yet. Use the invite link from README.md.", config.GUILD_ID)
@@ -61,9 +74,17 @@ def main():
         raise SystemExit("DISCORD_TOKEN is missing from your .env file. See README.md.")
 
     discord.utils.setup_logging(handler=runtime.file_handler("santa.log"), level=logging.INFO)
-    if runtime.has_console():
+    if runtime.env_flag("SANTA_LOG_STDOUT"):  # containers: `docker compose logs` reads stdout
+        discord.utils.setup_logging(handler=logging.StreamHandler(sys.stdout), level=logging.INFO)
+    elif runtime.has_console():
         discord.utils.setup_logging(level=logging.INFO)
     runtime.quiet_voice_warnings()
+    # A heartbeat left over from the previous run must not count as healthy while this one starts up.
+    runtime.write_heartbeat(connected=False, starting=True)
+    if hasattr(signal, "SIGTERM"):
+        # `docker stop` sends SIGTERM: turn it into the same clean shutdown as Ctrl+C
+        signal.signal(signal.SIGTERM, signal.default_int_handler)
+    log.info("Starting Saint Scernding (data: %s, version: %s)", runtime.DATA_DIR, os.getenv("KRASNODAR_REF", "local"))
     SantaBot().run(config.DISCORD_TOKEN, log_handler=None)
 
 

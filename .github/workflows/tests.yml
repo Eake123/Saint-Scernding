@@ -14,3 +14,58 @@ jobs:
           python-version: "3.11"
       - run: pip install -r requirements-dev.txt
       - run: pytest -q
+
+  docker:
+    # Builds the Krasnodar image and runs it with a FAKE token: it must start, write its files to /data as
+    # uid 10001, and never report healthy (it can't log in). Never use a real token here.
+    runs-on: ubuntu-latest
+    env:
+      DC: docker compose --env-file deploy/dev.env
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dev env with fake secrets
+        run: |
+          cp deploy/dev.env.example deploy/dev.env
+          printf 'DISCORD_TOKEN=not-a-real-token\nGUILD_ID=1\nORGANIZER_ID=2\nTIMEZONE=America/Edmonton\n' > deploy/dev.secrets.env
+          mkdir -p .data/state && sudo chown 10001:10001 .data/state
+          $DC config -q
+      - name: Build
+        run: |
+          $DC build
+          $DC images
+          docker image ls --format '{{.Repository}}:{{.Tag}} {{.Size}}'
+      - name: Image checks
+        run: |
+          $DC run --rm --no-deps bot python -c "
+          import os, json
+          from santa import runtime, config, letter
+          assert os.getuid() == 10001 and os.getgid() == 10001, 'not running as 10001'
+          assert str(config.DB_PATH) == '/data/santa.db', config.DB_PATH
+          assert str(letter.BASE_IMAGE) == '/data/assets/santa-letter.png', letter.BASE_IMAGE
+          fonts = {r: letter._font_path(r) for r in letter.FONTS}
+          print(json.dumps(fonts))
+          assert all(fonts.values()), 'missing fonts for the letter'
+          assert not os.path.exists('/app/supervisor.py') and not os.path.exists('/app/.env')
+          print('image ok')
+          "
+      - name: Smoke run (fake token, must not be healthy)
+        run: |
+          $DC up -d
+          sleep 25
+          $DC ps -a
+          $DC logs --no-color | tail -40
+          cid=$($DC ps -aq bot)
+          status=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{end}}' "$cid")
+          echo "health: $status"
+          test "$status" != "healthy"
+          $DC logs --no-color | grep -q "Starting Saint Scernding (data: /data"
+          $DC exec -T bot python healthcheck.py --container || true
+          sudo ls -ln .data/state .data/state/logs
+          test "$(sudo stat -c %u .data/state/santa.db)" = 10001
+      - name: Backup hook
+        run: |
+          $DC exec -T bot python -m santa.backup /data/backup/santa.db || $DC run --rm --no-deps bot python -m santa.backup /data/backup/santa.db
+          sudo test -s .data/state/backup/santa.db
+      - name: Clean up
+        if: always()
+        run: $DC down --remove-orphans

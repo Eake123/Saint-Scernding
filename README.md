@@ -121,6 +121,14 @@ Only one copy of the bot can run at a time. `start.bat` will tell you if the bac
 **Is it OK?** Run `.venv\Scripts\python healthcheck.py` to see whether it's connected, its last heartbeat,
 restarts and recent errors. Logs are in `logs/`.
 
+**Docker / a home server:** `compose.yaml` runs the bot in a container (Docker restarts it instead of
+`supervisor.py`, and its health check passes only while it's connected to Discord). Everything it saves goes in
+one folder mounted at `/data`: `santa.db`, `logs/`, `backup/santa.db` (made safely while it runs with
+`python -m santa.backup`) and `assets/santa-letter.png` for the letter picture. Settings come from your `.env`
+values as environment variables. To try it locally, follow `deploy/dev.env.example`. `deploy/krasnodar.yaml`
+describes it for Krasnodar-style hosting. Outside Docker, the same folders
+can be moved with `SANTA_DATA_DIR` and `SANTA_ASSETS_DIR`.
+
 **Elsewhere:** any small always-on machine works, such as a Raspberry Pi or a cheap VPS. Copy the folder along with your `.env`,
 then run `python supervisor.py` (or `bot.py` under systemd, pm2 or Docker). Reminders that were due while the bot was off get
 posted when it comes back.

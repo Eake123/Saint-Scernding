@@ -5,6 +5,8 @@ from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
 
+from . import runtime
+
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 
@@ -23,4 +25,4 @@ TIMEZONE = ZoneInfo(os.getenv("TIMEZONE", "America/New_York").strip())
 DAILY_POST_HOUR = int(os.getenv("DAILY_POST_HOUR", "10"))
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip() or None
 REPO_URL = os.getenv("REPO_URL", "https://github.com/Eake123/Saint-Scernding").strip()
-DB_PATH = ROOT / "santa.db"
+DB_PATH = runtime.DB_PATH  # SANTA_DATA_DIR/santa.db (default: next to bot.py)

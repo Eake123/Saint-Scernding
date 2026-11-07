@@ -34,7 +34,8 @@ class Scheduler(commands.Cog):
     async def tick(self):
         try:
             runtime.write_heartbeat(
-                connected=not self.bot.is_closed() and self.bot.is_ready(),
+                connected=(not self.bot.is_closed() and self.bot.is_ready()
+                           and getattr(self.bot, "gateway_up", True)),
                 latency_ms=round(self.bot.latency * 1000) if math.isfinite(self.bot.latency) else None,
                 guild=bool(self.bot.get_guild(config.GUILD_ID)),
                 participants=len(self.db.participants()),
