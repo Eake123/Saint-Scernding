@@ -1,4 +1,5 @@
-"""Writes the giftee's name onto the letter Saint Scernding is holding (assets/santa-letter.png)."""
+"""Writes the giftee's name onto the letter Saint Scernding is holding (santa-letter.png in SANTA_ASSETS_DIR,
+default assets/). If the picture is missing, the bot sends its DMs without it."""
 from __future__ import annotations
 
 import io
@@ -9,8 +10,9 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-ROOT = Path(__file__).resolve().parent.parent
-BASE_IMAGE = ROOT / "assets" / "santa-letter.png"
+from . import runtime
+
+BASE_IMAGE = runtime.ASSETS_DIR / "santa-letter.png"
 
 # Where the blank paper sits in BASE_IMAGE (measured by hand): centre, usable size, and its tilt.
 PAPER_CENTER = (815, 585)
@@ -20,8 +22,10 @@ PAPER_TILT = -3.2  # degrees; negative = clockwise, matching the paper
 INK = (59, 35, 20)
 RED_INK = (128, 22, 26)
 
-FONT_DIRS = [Path(os.environ.get("WINDIR", r"C:\Windows")) / "Fonts", Path("/usr/share/fonts"),
-             Path("/usr/local/share/fonts"), Path.home() / "Library" / "Fonts", Path("/Library/Fonts")]
+# <assets>/fonts first, so a server without the PC's fonts can be given the same ones
+FONT_DIRS = [runtime.ASSETS_DIR / "fonts", Path(os.environ.get("WINDIR", r"C:\Windows")) / "Fonts",
+             Path("/usr/share/fonts"), Path("/usr/local/share/fonts"), Path.home() / "Library" / "Fonts",
+             Path("/Library/Fonts")]
 FONTS = {
     # first one found wins; falls back to Pillow's built-in font
     "script": ["MTCORSVA.TTF", "Gabriola.ttf", "segoesc.ttf", "DejaVuSerif-Italic.ttf"],

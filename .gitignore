@@ -11,3 +11,8 @@ __pycache__/
 # trailer render scratch
 docs/trailer/frames/
 docs/trailer/palette.png
+
+# running compose.yaml locally (deploy/dev.env.example)
+.data/
+deploy/dev.env
+deploy/*.secrets.env

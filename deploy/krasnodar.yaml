@@ -1,0 +1,28 @@
+# Krasnodar manifest (contract v1): how kraken hosts Saint Scernding. See compose.yaml for the service itself.
+contract: 1
+name: santa
+display_name: Saint Scernding
+description: Secret Santa Discord bot (outbound Discord gateway only; no ports)
+compose: compose.yaml
+singleton: true          # one Discord token = exactly one running copy, anywhere
+
+resources:
+  memory: 512M
+
+health:
+  timeout: 180
+
+volumes:
+  - name: state          # /srv/data/santa/state -> /data: santa.db, logs/, backup/, assets/
+    owner: "10001:10001"
+    backup: true
+
+secrets:
+  required: [DISCORD_TOKEN, GUILD_ID, ORGANIZER_ID]
+  optional: [ANTHROPIC_API_KEY, TIMEZONE, DAILY_POST_HOUR]
+
+backup:
+  pre:
+    service: bot
+    command: ["python", "-m", "santa.backup", "/data/backup/santa.db"]
+  exclude: []

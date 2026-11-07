@@ -1,0 +1,25 @@
+# Never in the image: secrets, the draw, local state
+.env
+.env.*
+santa.db
+santa.db-*
+*.db
+.data/
+logs/
+deploy/dev.env
+deploy/*.secrets.env
+
+# Not needed at runtime
+.git/
+.github/
+.venv/
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+tests/
+docs/
+assets/
+*.md
+start.bat
+install_autostart.ps1
+supervisor.py

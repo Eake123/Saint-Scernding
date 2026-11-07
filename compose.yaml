@@ -1,0 +1,23 @@
+# Saint Scernding under Krasnodar (contract v1). Krasnodar sets the KRASNODAR_* variables on kraken;
+# on a PC, see deploy/dev.env.example. Never run a second copy with the real token while one is running.
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    env_file: ${KRASNODAR_SECRETS:?set KRASNODAR_SECRETS (see deploy/dev.env.example)}
+    environment:
+      SANTA_DATA_DIR: /data
+      SANTA_ASSETS_DIR: /data/assets
+      SANTA_LOG_STDOUT: "1"
+      KRASNODAR_REF: ${KRASNODAR_REF:-dev}
+    volumes:
+      # santa.db, logs/ (file logs + heartbeat), backup/santa.db, assets/santa-letter.png
+      - ${KRASNODAR_DATA:?set KRASNODAR_DATA (see deploy/dev.env.example)}/state:/data
+    healthcheck:
+      # healthy = heartbeat under 3 minutes old (it's written every 60s) and connected to Discord
+      test: ["CMD", "python", "healthcheck.py", "--container"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+      start_interval: 5s
