@@ -126,7 +126,7 @@ restarts and recent errors. Logs are in `logs/`.
 one folder mounted at `/data`: `santa.db`, `logs/`, `backup/santa.db` (made safely while it runs with
 `python -m santa.backup`) and `assets/santa-letter.png` for the letter picture. Settings come from your `.env`
 values as environment variables. To try it locally, follow `deploy/dev.env.example`. `deploy/krasnodar.yaml`
-describes it for [Krasnodar](https://github.com/Eake123/Krasnodar)-style hosting. Outside Docker, the same folders
+describes it for Krasnodar-style hosting. Outside Docker, the same folders
 can be moved with `SANTA_DATA_DIR` and `SANTA_ASSETS_DIR`.
 
 **Elsewhere:** any small always-on machine works, such as a Raspberry Pi or a cheap VPS. Copy the folder along with your `.env`,
