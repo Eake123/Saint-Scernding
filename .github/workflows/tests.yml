@@ -32,7 +32,8 @@ jobs:
       - name: Build
         run: |
           $DC build
-          docker image ls --format '{{.Repository}}:{{.Tag}} {{.Size}}' | grep -i santa
+          $DC images
+          docker image ls --format '{{.Repository}}:{{.Tag}} {{.Size}}'
       - name: Image checks
         run: |
           $DC run --rm --no-deps bot python -c "

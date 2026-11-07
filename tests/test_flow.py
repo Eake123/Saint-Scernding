@@ -9,7 +9,7 @@ os.environ.setdefault("GUILD_ID", "1")
 os.environ.setdefault("ORGANIZER_ID", "100")
 os.environ.setdefault("TIMEZONE", "America/Edmonton")
 
-from santa import actions, config, ui  # noqa: E402
+from santa import actions, config, letter, ui  # noqa: E402
 from santa.cogs.admin import Admin  # noqa: E402
 from santa.cogs.participant import Participant  # noqa: E402
 from santa.cogs.scheduler import Scheduler  # noqa: E402
@@ -227,8 +227,11 @@ async def test_full_season(tmp_path):
     for uid in people:
         assert "your giftee is" in bot.dm_text(uid)
         drawn_dm = next(i for i in bot.dms[uid].items if getattr(i, "embed", None) and "DRAWN" in i.embed.title)
-        assert drawn_dm.file.filename == "santa-letter.jpg"
-        assert drawn_dm.embed.image.url == "attachment://santa-letter.jpg"
+        if letter.available():  # the picture isn't in git; without it the DM goes out as just the embed
+            assert drawn_dm.file.filename == "santa-letter.jpg"
+            assert drawn_dm.embed.image.url == "attachment://santa-letter.jpg"
+        else:
+            assert not hasattr(drawn_dm, "file")
     # the organizer's own replies never contain the pairings
     assert "→" not in click.text()
 
