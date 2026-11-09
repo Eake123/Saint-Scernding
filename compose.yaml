@@ -3,7 +3,18 @@
 services:
   bot:
     build: .
+    # one tag per deployed commit, so a rollback finds its own image instead of whatever :latest is
+    image: santa-bot:${KRASNODAR_REF:-dev}
     restart: unless-stopped
+    user: "10001:10001"
+    # Locked down: nothing in the image is writable, no Linux capabilities, no privilege escalation.
+    # The bot writes only to /data (the state volume) and, for SQLite/Python temp files, a small /tmp in memory.
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
     env_file: ${KRASNODAR_SECRETS:?set KRASNODAR_SECRETS (see deploy/dev.env.example)}
     environment:
       SANTA_DATA_DIR: /data
